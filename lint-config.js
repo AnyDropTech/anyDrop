@@ -1,7 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const packages = fs.readdirSync(path.resolve(__dirname, 'packages'))
+const packages = fs.readdirSync(path.resolve(__dirname, 'src'))
 
 module.exports = {
   parserPreset: {
