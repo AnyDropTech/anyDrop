@@ -1,9 +1,16 @@
 import { Outlet } from 'react-router-dom'
-import { Menu } from 'antd'
+import { Menu, theme } from 'antd'
 
 import { useNavigate } from 'react-router-dom'
 
+import './default.scss'
+
+const { useToken } = theme;
+
 function DefaultLayout() {
+
+  const { token } = useToken()
+
   const navigate = useNavigate()
 
   function navigateTo(path: string) {
@@ -13,15 +20,15 @@ function DefaultLayout() {
   const sidebarItems = [
     {
       key: '1',
-      label: 'Home',
+      label: '首页',
     },
     {
       key: '2',
-      label: 'Find',
+      label: '发现',
     },
     {
       key: '3',
-      label: 'Transfer',
+      label: '传输',
     },
   ]
 
@@ -42,13 +49,15 @@ function DefaultLayout() {
   }
 
   return (
-    <>
+    <div className='page'>
       {/* 统一的头部内容 */}
       <div className="main-header"></div>
       <div className="main-container">
         {/* 侧边栏 */}
         <div className="main-sidebar">
+          <div className='main-logo' style={{background: token.colorBgContainer, color: token.colorPrimaryActive}}>AnyDrop</div>
           <Menu
+          className='sidebar-menu'
             mode="vertical"
             defaultSelectedKeys={['1']}
             items={sidebarItems}
@@ -60,7 +69,7 @@ function DefaultLayout() {
           <Outlet />
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

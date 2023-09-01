@@ -1,0 +1,32 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .main-container {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    .main-sidebar {
+      width: 200px;
+    }
+    .main-logo {
+      height: 80px;
+      line-height: 80px;
+      font-size: bold;
+      text-align: center;
+      font-size: 32px;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+      background-color: #fff;
+    }
+    .sidebar-menu {
+      height: 100%;
+      width: 100%;
+      .ant-menu-item {
+        text-align: center;
+      }
+    }
+    .main-page {
+      flex: 1;
+    }
+  }
+}
