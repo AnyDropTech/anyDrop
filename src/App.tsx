@@ -1,43 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import { invoke } from '@tauri-apps/api/tauri'
-import './App.css'
+import { observer } from 'mobx-react-lite'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import zhCN from 'antd/locale/zh_CN'
+import { ConfigProvider } from 'antd'
+import DefaultLayout from './layouts/default'
+import Home from './views/home'
+import Find from './views/find'
+import Transfer from './views/transfer'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [greetMsg, setGreetMsg] = useState("");
-
-  const handleClick = async () => {
-    setCount((count) => count + 1)
-    setGreetMsg(await invoke('count', { count }));
-  }
-
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <h2>tauri message: { greetMsg }</h2>
-      <div className="card">
-        <button onClick={handleClick}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+  return(
+    <ConfigProvider locale={zhCN}>
+      <BrowserRouter>
+        <Routes>
+          {/* 布局组件 */}
+          <Route path="/" element={<DefaultLayout />}>
+            {/* Home */}
+            <Route index element={<Home />} />
+            {/* 发现 */}
+            <Route path="find" element={<Find />} />
+            {/* 传输 */}
+            <Route path="transfer" element={<Transfer />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ConfigProvider>
   )
 }
 
-export default App
+export default observer(App)

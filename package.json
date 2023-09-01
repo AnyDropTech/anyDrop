@@ -28,8 +28,12 @@
     }
   },
   "dependencies": {
+    "antd": "^5.8.5",
+    "mobx": "^6.10.2",
+    "mobx-react-lite": "^4.0.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.15.0"
   },
   "devDependencies": {
     "@cavin-huang/eslint-config": "^0.0.12",
@@ -50,6 +54,7 @@
     "husky": "^8.0.3",
     "internal-ip": "^8.0.0",
     "lint-staged": "^14.0.1",
+    "sass": "^1.66.1",
     "typescript": "^5.2.2",
     "vite": "^4.4.5"
   },
