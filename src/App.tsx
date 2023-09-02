@@ -1,14 +1,15 @@
-import { observer } from 'mobx-react-lite'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import zhCN from 'antd/locale/zh_CN'
 import { ConfigProvider } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
+import { observer } from 'mobx-react-lite'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+
 import DefaultLayout from './layouts/default'
-import Home from './views/home'
 import Find from './views/find'
+import Home from './views/home'
 import Transfer from './views/transfer'
 
 function App() {
-  return(
+  return (
     <ConfigProvider locale={zhCN}>
       <BrowserRouter>
         <Routes>

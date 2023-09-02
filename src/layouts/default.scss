@@ -2,13 +2,75 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+
+  .main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 56px;
+    padding-right: 10px;
+    border-bottom: 1px solid #eee;
+
+    .header-action {
+      height: 56px;
+      display: flex;
+      align-items: center;
+
+      .action-logo {
+        width: 130px;
+        height: 50px;
+        line-height: 50px;
+      }
+    }
+
+    .titlebar {
+      background: #fff;
+      user-select: none;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .titlebar-button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 30px;
+      height: 30px;
+    }
+
+    .titlebar-button {
+      margin-left: 15px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 30px;
+      height: 30px;
+
+      &:hover {
+        background-color: #eee;
+      }
+    }
+
+    #titlebar-close {
+      &:hover {
+        color: white;
+        background-color: rgb(235, 32, 19);
+      }
+    }
+  }
+
   .main-container {
     flex: 1;
     display: flex;
     width: 100%;
+
     .main-sidebar {
       width: 200px;
+      display: flex;
+      flex-direction: column;
     }
+
     .main-logo {
       height: 80px;
       line-height: 80px;
@@ -18,13 +80,16 @@
       font-family: Georgia, 'Times New Roman', Times, serif;
       background-color: #fff;
     }
+
     .sidebar-menu {
-      height: 100%;
+      flex: 1;
       width: 100%;
+
       .ant-menu-item {
         text-align: center;
       }
     }
+
     .main-page {
       flex: 1;
     }
