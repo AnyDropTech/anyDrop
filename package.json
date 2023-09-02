@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.5",
+    "@tauri-apps/plugin-fs": "2.0.0-alpha.1",
     "@tauri-apps/plugin-window": "2.0.0-alpha.1",
     "antd": "^5.8.5",
     "mobx": "^6.10.2",

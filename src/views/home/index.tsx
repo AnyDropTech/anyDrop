@@ -1,7 +1,14 @@
 import { invoke } from '@tauri-apps/api/tauri'
+import { BaseDirectory, createDir } from '@tauri-apps/plugin-fs'
 import type { FormInstance } from 'antd'
 import { Button, Card, Form, Input, Space, Switch } from 'antd'
 import React, { useEffect } from 'react'
+
+function saveConfig() {
+  console.log(BaseDirectory)
+  // writeTextFile('app.conf', 'file contents', { dir: BaseDirectory.Document })
+  createDir('db', { dir: BaseDirectory.Document })
+}
 
 function Home() {
   const formRef = React.useRef<FormInstance>(null)
@@ -13,6 +20,7 @@ function Home() {
 
   useEffect(() => {
     getLocaleIp()
+    saveConfig()
   })
 
   return (
