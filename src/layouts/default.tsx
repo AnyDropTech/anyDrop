@@ -1,12 +1,9 @@
-import { CloseOutlined, ExpandOutlined, MinusOutlined } from '@ant-design/icons'
-import { getCurrent } from '@tauri-apps/plugin-window'
 import { Menu, theme } from 'antd'
 import { Outlet, useNavigate } from 'react-router-dom'
 
 import './default.scss'
 
 const { useToken } = theme
-const appWindow = getCurrent()
 
 function DefaultLayout() {
   const { token } = useToken()
@@ -48,36 +45,10 @@ function DefaultLayout() {
     }
   }
 
-  const handleMinize = () => {
-    appWindow.minimize()
-  }
-  const handleMaximize = () => {
-    appWindow.toggleMaximize()
-  }
-
-  const handleClose = () => {
-    appWindow.close()
-  }
-
   return (
     <div className='page'>
       {/* 统一的头部内容 */}
-      <div className="main-header">
-        <div className="header-action">
-            {/* <img src={LogoImg} alt="" className="action-logo" /> */}
-        </div>
-        <div data-tauri-drag-region className="titlebar">
-          <div className="titlebar-button" id="titlebar-minimize" onClick={handleMinize}>
-            <MinusOutlined />
-          </div>
-          <div className="titlebar-button" id="titlebar-maximize" onClick={handleMaximize}>
-            <ExpandOutlined />
-          </div>
-          <div className="titlebar-button" id="titlebar-close" onClick={handleClose}>
-            <CloseOutlined />
-          </div>
-        </div>
-      </div>
+      <div className="main-header"></div>
       <div className="main-container">
         {/* 侧边栏 */}
         <div className="main-sidebar">
