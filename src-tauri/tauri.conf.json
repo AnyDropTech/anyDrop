@@ -62,7 +62,7 @@
   },
   "plugins": {
     "fs": {
-      "scope": ["*", "$DOWNLOAD"]
+      "scope": ["$APPCONFIG/*", "$DOCUMENT/*", "$DESKTOP/*", "$DOWNLOAD/*", "$HOME/*", "$TEMP/*"]
     }
   }
 }
