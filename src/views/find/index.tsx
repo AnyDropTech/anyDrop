@@ -41,7 +41,7 @@ function Find() {
     },
   ]
 
-  const List: React.FC = () => <Collapse defaultActiveKey={['1']} ghost items={items} />
+  const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
   return (
     <div className="page-home">
       <div className="page-header">AnyDrop V0.0.1</div>

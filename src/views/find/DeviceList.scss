@@ -24,5 +24,19 @@
         bottom: -4px;
       }
     }
+    &-info {
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    &-name {
+      font-size: 20px;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+      font-weight: 500;
+    }
+    &-device_name {
+      font-size: 16px;
+      color: #666;
+    }
   }
 }
