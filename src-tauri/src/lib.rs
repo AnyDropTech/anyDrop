@@ -1,51 +1,32 @@
 use local_ipaddress;
-use std::net::{UdpSocket, SocketAddr, Ipv4Addr, IpAddr};
-use std::time::Duration;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
+use std::thread;
 
 #[tauri::command]
-fn broadcast_message(message: String, port: u16) -> Result<(), String> {
-    println!("Broadcasting message: {}, port: {}", message, port);
-    // 创建UDP套接字并绑定到指定端口
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).map_err(|e| e.to_string())?;
+fn list_network_devices() -> Result<Vec<String>, String> {
+    let mut devices = Vec::new();
 
-    // 设置广播选项
-    socket.set_broadcast(true).map_err(|e| e.to_string())?;
+    // 扫描局域网设备
+    for i in 1..255 {
+        let ip = Ipv4Addr::new(192, 168, 3, i);
+        let socket = UdpSocket::bind(SocketAddr::new(IpAddr::V4(ip), 0)).map_err(|e| e.to_string())?;
+        socket.set_read_timeout(Some(std::time::Duration::from_secs(1))).map_err(|e| e.to_string())?;
 
-    // 定义广播地址
-    let ip_address = Ipv4Addr::new(255, 255, 255, 255);
-    let broadcast_addr = SocketAddr::new(IpAddr::V4(ip_address), port);
+        // 向设备发送请求并等待响应
+        let request = "IsNetworked".as_bytes();
+        let target_addr = SocketAddr::new(IpAddr::V4(ip), 12345);
+        socket.send_to(request, target_addr).map_err(|e| e.to_string())?;
 
-    // 发送消息到广播地址
-    socket.send_to(message.as_bytes(), broadcast_addr).map_err(|e| e.to_string())?;
-
-    Ok(())
-}
-
-#[tauri::command]
-fn listen_for_broadcast(port: u16) -> Result<String, String> {
-    // 创建UDP套接字并绑定到指定端口
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).map_err(|e| e.to_string())?;
-
-    // 设置读取超时时间为1秒，可以根据需要调整
-    socket.set_read_timeout(Some(Duration::from_secs(1))).map_err(|e| e.to_string())?;
-
-    // 定义一个缓冲区来接收消息
-    let mut buffer = [0; 1024];
-
-    loop {
-        match socket.recv_from(&mut buffer) {
-            Ok((num_bytes, _)) => {
-                // 将接收到的消息转换为字符串
-                let message = String::from_utf8_lossy(&buffer[..num_bytes]).to_string();
-                return Ok(message);
-            }
-            Err(e) => {
-                // 超时或其他错误，继续等待
-                println!("Error receiving broadcast: {}", e.to_string());
-                return Err(e.to_string());
+        let mut response = [0u8; 128];
+        if let Ok((num_bytes, _)) = socket.recv_from(&mut response) {
+            let message = String::from_utf8_lossy(&response[..num_bytes]).to_string();
+            if message == "Yes" {
+                devices.push(ip.to_string());
             }
         }
     }
+
+    Ok(devices)
 }
 
 
@@ -65,7 +46,7 @@ fn count(count: i32) -> String {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
-    .invoke_handler(tauri::generate_handler![count, get_locale_ip, broadcast_message, listen_for_broadcast])
+    .invoke_handler(tauri::generate_handler![count, get_locale_ip, list_network_devices])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

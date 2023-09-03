@@ -52,24 +52,17 @@ function Find() {
     setTimeout(() => {})
   }
 
-  const [message, setMessage] = useState()
-  const listenForBroadcast = useCallback(() => {
-    invoke('listen_for_broadcast', { port: 12345 })
-      .then((response: any) => {
-        console.log('🚀 ~ file: index.tsx:59 ~ .then ~ response:', response)
-        setMessage(response)
-        // document.getElementById('receivedMessage').textContent = response
-        // 重新调用 listenForBroadcast
-        // setTimeout(listenForBroadcast, 1000) // 1秒后重新调用
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }, [message])
+  const [devices, setDevices] = useState([])
 
   useEffect(() => {
-    listenForBroadcast()
-  }, [listenForBroadcast])
+    invoke('list_network_devices')
+      .then((response) => {
+        setDevices(response)
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      })
+  }, [])
 
   return (
     <div className="page-home">
@@ -77,6 +70,12 @@ function Find() {
       <div className="page-content">
         <Button type="primary" onClick={handleOpen}>开启</Button>
         <List />
+        <h1>局域网设备列表</h1>
+        <ul>
+          {devices.map((device, index) => (
+            <li key={index}>{device}</li>
+          ))}
+        </ul>
       </div>
     </div>
   )
