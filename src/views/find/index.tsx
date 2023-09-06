@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api'
 import type { CollapseProps } from 'antd'
 import { Button, Collapse, theme } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { Platfrom } from '../../utils'
 
@@ -46,23 +46,28 @@ function Find() {
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
   const handleOpen = () => {
-    invoke('broadcast_message', { message: 'hello', port: 12345 }).then((res) => {
+    invoke('start_broadcast_command', { magicString: 'hello', data: { name: '1', test: '2' } }).then((res) => {
       console.log(res)
+
+      invoke('query_service', { magicString: 'hello' }).then((res) => {
+        console.log(res)
+      })
+    }).catch((e) => {
+      console.error(e)
     })
-    setTimeout(() => {})
   }
 
   const [devices, setDevices] = useState([])
 
-  useEffect(() => {
-    invoke('list_network_devices')
-      .then((response) => {
-        setDevices(response)
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      })
-  }, [])
+  // useEffect(() => {
+  //   // invoke('list_network_devices')
+  //   //   .then((response) => {
+  //   //     setDevices(response)
+  //   //   })
+  //   //   .catch((error) => {
+  //   //     console.error('Error:', error)
+  //   //   })
+  // }, [])
 
   return (
     <div className="page-home">

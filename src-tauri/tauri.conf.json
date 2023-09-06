@@ -3,7 +3,7 @@
   "build": {
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",
-    "devPath": "http://localhost:5173",
+    "devPath": "http://localhost:9002",
     "distDir": "../build"
   },
   "package": {
@@ -62,7 +62,14 @@
   },
   "plugins": {
     "fs": {
-      "scope": ["$APPCONFIG/*", "$DOCUMENT/*", "$DESKTOP/*", "$DOWNLOAD/*", "$HOME/*", "$TEMP/*"]
+      "scope": [
+        "$APPCONFIG/*",
+        "$DOCUMENT/*",
+        "$DESKTOP/*",
+        "$DOWNLOAD/*",
+        "$HOME/*",
+        "$TEMP/*"
+      ]
     }
   }
 }
