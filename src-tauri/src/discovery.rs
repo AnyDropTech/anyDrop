@@ -1,12 +1,11 @@
 mod utils;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 
-use mdns_sd::{ServiceDaemon, ServiceInfo, ServiceEvent};
+use mdns_sd::{ServiceDaemon, ServiceInfo, ServiceEvent, TxtProperties};
 use names::Generator;
 
-use anyhow::anyhow;
 pub use anyhow::Result as AResult;
 use tokio::sync::oneshot;
 
@@ -58,12 +57,14 @@ pub fn register_service(magic_string: &str, data: HashMap<String, String>) -> AR
 
   Ok(())
 }
+
+#[derive(Debug)]
 pub struct Person {
   name: String,
   age: u32,
 }
 
-pub async fn query(magic_string: &str, tx: oneshot::Sender<Person>) -> AResult<(), anyhow::Error> {
+pub fn query(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperties)> {
   println!("Querying for service1: {}", magic_string);
   // Create a daemon
   let mdns = ServiceDaemon::new().expect("Failed to create daemon");
@@ -76,37 +77,15 @@ pub async fn query(magic_string: &str, tx: oneshot::Sender<Person>) -> AResult<(
 
   println!("Looking for service: {}", expected_fullname);
 
-  tokio::spawn(async move {
-    if let Ok(ServiceEvent::ServiceResolved(info)) = receiver.recv() {
-      // if info.get_fullname() == expected_fullname {
-      //     println!("Matched service: {info:?}");
-      //     println!(
-      //         "At {:?}: Resolved a new service: {} host: {} port: {} IP: {:?} TXT properties: {:?}",
-      //         now.elapsed(),
-      //         info.get_fullname(),
-      //         info.get_hostname(),
-      //         info.get_port(),
-      //         info.get_addresses(),
-      //         info.get_properties(),
-      //     );
-      //     return;
-      // }
-      println!("Matched service: {info:?}");
-      println!(
-          "At {:?}: Resolved a new service: {} host: {} port: {} IP: {:?} TXT properties: {:?}",
-          now.elapsed(),
-          info.get_fullname(),
-          info.get_hostname(),
-          info.get_port(),
-          info.get_addresses(),
-          info.get_properties(),
-      );
-      let data = Person {
-          name: "John".to_string(),
-          age: 32,
-        };
-      let _ = tx.send(data).map_err(|_| anyhow!("Couldn't sent signal via channel"));
+  loop {
+    if let ServiceEvent::ServiceResolved(info) = receiver.recv()? {
+        if info.get_type() == SERVICE_TYPE {
+            return Ok((
+                info.get_addresses().clone(),
+                info.get_port(),
+                info.get_properties().clone(),
+            ));
+        }
     }
-  });
-  Ok(())
+}
 }

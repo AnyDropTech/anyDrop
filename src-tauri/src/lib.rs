@@ -1,10 +1,12 @@
 mod discovery;
-use std::collections::HashMap;
+use anyhow::Result as AResult;
 use local_ipaddress;
+use std::collections::{HashMap, HashSet};
+use std::net::Ipv4Addr;
 
-use discovery::{register_service, query, Person};
+use mdns_sd::TxtProperties;
 
-use tokio::sync::oneshot;
+use discovery::{register_service, query};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -19,15 +21,15 @@ fn start_broadcast_command(magic_string: &str, data: HashMap<String, String>)  {
 }
 
 #[tauri::command]
-fn query_service(magic_string: &str) {
-  let (tx, rx) = oneshot::channel();
+fn query_service(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperties)> {
 
-  let res = query(magic_string, tx);
+  let res = query(magic_string);
 
   // rx.await.expect_err("failed to receive response")
+  // format!("{}", "success")
 
+  res
 }
-
 
 #[tauri::command]
 fn get_locale_ip() -> String {
