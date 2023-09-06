@@ -1,5 +1,18 @@
-mod mdnsLib;
+mod discovery;
 use local_ipaddress;
+
+use discovery::{register_service, browser_service};
+
+#[tauri::command]
+fn start_discovery_command() {
+  register_service();
+}
+
+#[tauri::command]
+fn start_broadcast_command() {
+  browser_service();
+}
+
 
 #[tauri::command]
 fn get_locale_ip() -> String {
@@ -17,7 +30,7 @@ fn count(count: i32) -> String {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
-    .invoke_handler(tauri::generate_handler![count, get_locale_ip, mdnsLib::start_broadcast])
+    .invoke_handler(tauri::generate_handler![count, get_locale_ip, zeroconf::zeroconf_rs_init])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
