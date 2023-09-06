@@ -1,17 +1,16 @@
+mod discovery;
 use local_ipaddress;
 
-mod mdns;
-
-use mdns::{start_discovery, start_broadcast};
+use discovery::{register_service, browser_service};
 
 #[tauri::command]
 fn start_discovery_command() {
-    start_discovery();
+  register_service();
 }
 
 #[tauri::command]
 fn start_broadcast_command() {
-    start_broadcast();
+  browser_service();
 }
 
 
