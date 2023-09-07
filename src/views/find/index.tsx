@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Platfrom } from '../../utils'
 
 import DeviceList from './DeviceList'
-import { type IDevice } from './types'
+import type { IDevice, IQueryRes } from './types'
 
 const { useToken } = theme
 
@@ -21,6 +21,8 @@ function Find() {
     },
   ]
 
+  const [devices, setDevices] = useState<IQueryRes[]>([])
+
   const offlineDevice: IDevice[] = [
     {
       platform: Platfrom.MAC,
@@ -34,25 +36,23 @@ function Find() {
     {
       key: 'online',
       label: '在线设备',
-      children: <DeviceList listData={onlineDevice}/>,
+      children: <DeviceList listData={devices}/>,
     },
     {
       key: 'offline',
       label: '离线设备',
-      children: <DeviceList listData={offlineDevice}/>,
+      children: <DeviceList listData={[]}/>,
     },
   ]
 
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
-  const [devices, setDevices] = useState([])
-
   const handleOpen = () => {
     invoke('start_broadcast_command', { magicString: 'hello', data: { name: '1', test: '2' } }).then((res) => {
       console.log(res)
 
-      invoke('query_service', { magicString: 'hello' }).then((res) => {
-        console.log(res)
+      invoke<IQueryRes>('query_service', { magicString: 'hello' }).then((res) => {
+        setDevices(devices.concat(res))
       })
     }).catch((e) => {
       console.error(e)
@@ -75,12 +75,6 @@ function Find() {
       <div className="page-content">
         <Button type="primary" onClick={handleOpen}>开启</Button>
         <List />
-        <h1>局域网设备列表</h1>
-        <ul>
-          {devices.map((device, index) => (
-            <li key={index}>{device}</li>
-          ))}
-        </ul>
       </div>
     </div>
   )

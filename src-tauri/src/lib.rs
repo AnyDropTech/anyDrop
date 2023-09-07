@@ -62,6 +62,7 @@ fn count(count: i32) -> String {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_os::init())
     .invoke_handler(tauri::generate_handler![count, get_locale_ip, start_broadcast_command, start_discovery_command, query_service])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
