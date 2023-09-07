@@ -47,13 +47,17 @@ function Find() {
 
   const [devices, setDevices] = useState([])
 
+  const queryDevice = () => {
+    invoke('query_service', { magicString: 'hello' }).then((res: any) => {
+      console.log(res)
+      setDevices(devices.concat(res))
+    })
+  }
+
   const handleOpen = () => {
     invoke('start_broadcast_command', { magicString: 'hello', data: { name: '1', test: '2' } }).then((res) => {
       console.log(res)
-
-      invoke('query_service', { magicString: 'hello' }).then((res) => {
-        console.log(res)
-      })
+      queryDevice()
     }).catch((e) => {
       console.error(e)
     })
@@ -78,7 +82,7 @@ function Find() {
         <h1>局域网设备列表</h1>
         <ul>
           {devices.map((device, index) => (
-            <li key={index}>{device}</li>
+            <li key={index}>{device.fullname}</li>
           ))}
         </ul>
       </div>
