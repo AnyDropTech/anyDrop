@@ -19,6 +19,21 @@ pub fn generate_magic_string() -> String {
     generator.next().unwrap()
 }
 
+pub enum Platfrom {
+  IOS,
+  ANDROID,
+  MAC,
+  WINDOWS,
+  LINUX,
+}
+
+pub struct Person {
+  platform: Platfrom,
+  nickname: String,
+  device_name: String,
+  color: String
+}
+
 pub fn register_service(magic_string: &str, data: HashMap<String, String>) -> AResult<()> {
   let mdns = ServiceDaemon::new().expect("Could not create service daemon");
   let my_addrs: Vec<Ipv4Addr> = utils::my_ipv4_interfaces()
@@ -58,11 +73,6 @@ pub fn register_service(magic_string: &str, data: HashMap<String, String>) -> AR
   Ok(())
 }
 
-#[derive(Debug)]
-pub struct Person {
-  name: String,
-  age: u32,
-}
 
 pub fn query(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperties)> {
   println!("Querying for service1: {}", magic_string);
