@@ -45,6 +45,8 @@ function Find() {
 
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
+  const [devices, setDevices] = useState([])
+
   const handleOpen = () => {
     invoke('start_broadcast_command', { magicString: 'hello', data: { name: '1', test: '2' } }).then((res) => {
       console.log(res)
@@ -56,8 +58,6 @@ function Find() {
       console.error(e)
     })
   }
-
-  const [devices, setDevices] = useState([])
 
   // useEffect(() => {
   //   // invoke('list_network_devices')

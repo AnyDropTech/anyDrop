@@ -74,14 +74,14 @@ pub fn register_service(magic_string: &str, data: HashMap<String, String>) -> AR
 }
 
 
-pub fn query(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperties)> {
+pub fn query(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, String, String, u16, TxtProperties)> {
   println!("Querying for service1: {}", magic_string);
   // Create a daemon
   let mdns = ServiceDaemon::new().expect("Failed to create daemon");
 
   let receiver = mdns.browse(&SERVICE_TYPE).expect("Failed to browse");
 
-  let now = std::time::Instant::now();
+  // let now = std::time::Instant::now();
 
   let expected_fullname = format!("{magic_string}.{SERVICE_TYPE}");
 
@@ -89,11 +89,14 @@ pub fn query(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperti
 
   loop {
     if let ServiceEvent::ServiceResolved(info) = receiver.recv()? {
+        let _info = info.clone();
         if info.get_type() == SERVICE_TYPE {
             return Ok((
-                info.get_addresses().clone(),
-                info.get_port(),
-                info.get_properties().clone(),
+                _info.clone().get_addresses().clone(),
+                _info.clone().get_fullname().clone().to_string(),
+                _info.clone().get_hostname().clone().to_string(),
+                _info.clone().get_port().clone(),
+                _info.clone().get_properties().clone(),
             ));
         }
     }
