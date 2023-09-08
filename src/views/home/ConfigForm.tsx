@@ -20,8 +20,8 @@ interface FormData {
 }
 
 async function saveConfig(config: FormData) {
-  await writeTextFile('app.conf', JSON.stringify(config), { dir: BaseDirectory.Home })
-  readTextFile('app.conf', { dir: BaseDirectory.Home }).then((res) => {
+  await writeTextFile('anydrop.config.conf', JSON.stringify(config), { dir: BaseDirectory.Home })
+  readTextFile('anydrop.config.conf', { dir: BaseDirectory.Home }).then((res) => {
     console.log(res)
   })
 }
@@ -29,14 +29,13 @@ async function saveConfig(config: FormData) {
 async function checkConfig() {
   try {
     const appConfigPath = await homeDir()
-    const configFilePath = `${appConfigPath}/app.conf`
+    const configFilePath = `${appConfigPath}/anydrop.config.conf`
     const meta = await metadata(configFilePath)
     return meta.permissions.readonly === false
   }
   catch (error) {
     return false
   }
-  // console.log('🚀 ~ file: ConfigForm.tsx:36 ~ getLocaleIp ~ saveContent:', saveContent)
 }
 
 function ConfigForm() {
@@ -46,9 +45,8 @@ function ConfigForm() {
   const getLocaleIp = useCallback(async () => {
     const ip = await invoke<string>('get_locale_ip')
     const checkRef = await checkConfig()
-    console.log('🚀 ~ file: ConfigForm.tsx:49 ~ getLocaleIp ~ checkRef:', checkRef)
     if (checkRef) {
-      const saveContent = await readTextFile('app.conf', { dir: BaseDirectory.Home })
+      const saveContent = await readTextFile('anydrop.config.conf', { dir: BaseDirectory.Home })
       const config = (() => {
         try {
           return JSON.parse(saveContent)
@@ -66,12 +64,10 @@ function ConfigForm() {
 
         const password = uuid()
         const nickname = `AnyDrop_${randomNum(4).toString()}`
-        // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
         const dirName = await downloadDir()
         const _platform = await platform()
         form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
       }
-      console.log('🚀 ~ file: ConfigForm.tsx:36 ~ getLocaleIp ~ saveContent:', saveContent)
     }
     else {
       const hostName = await hostname()
@@ -83,6 +79,11 @@ function ConfigForm() {
       const _platform = await platform()
       form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
     }
+
+    if (!checkRef) {
+      const config = form.getFieldsValue()
+      await saveConfig(config)
+    }
   }, [])
 
   const handleFormFinish = (values: FormData) => {
@@ -91,7 +92,6 @@ function ConfigForm() {
 
   const handleSelectPath = () => {
     invoke<string>('get_user_savepath').then((res) => {
-      console.log('🚀 ~ file: ConfigForm.tsx:56 ~ handleSelectPath ~ res', res)
       if (res)
         form.setFieldsValue({ receiveDir: res })
     })

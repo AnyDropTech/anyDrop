@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use rfd::FileDialog;
 
-use discovery::{register_service, query};
+use discovery::{register_service, query, ClientDevice};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -27,8 +27,8 @@ fn get_user_savepath() -> String {
 }
 
 #[tauri::command]
-fn start_broadcast_command(magic_string: &str, data: HashMap<String, String>)  {
-  let _res = register_service(magic_string, data);
+fn start_broadcast_command(data: ClientDevice)  {
+  let _res = register_service(data);
 
   format!("{}", "success");
 }
