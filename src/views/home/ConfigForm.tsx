@@ -1,5 +1,6 @@
 import { downloadDir } from '@tauri-apps/api/path'
 import { invoke } from '@tauri-apps/api/tauri'
+import { open } from '@tauri-apps/plugin-dialog'
 import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { hostname, platform } from '@tauri-apps/plugin-os'
 import type { FormInstance } from 'antd'
@@ -47,6 +48,19 @@ function ConfigForm() {
 
   const handleFormFinish = (values: FormData) => {
     saveConfig(values)
+  }
+
+  const handleSelectDir = async () => {
+    const dirName = await downloadDir()
+    console.log("🚀 ~ file: ConfigForm.tsx:55 ~ handleSelectDir ~ dirName:", dirName)
+    const selected = await open({
+      multiple: false,
+      defaultPath: dirName,
+      directory: true,
+    })
+
+    if (selected)
+      console.log(selected)
   }
 
   useEffect(() => {
@@ -109,8 +123,10 @@ function ConfigForm() {
           name="receiveDir"
         >
           <Space.Compact block style={{ width: '100%' }}>
-            <Input readOnly/>
-            {/* <Button type="primary">选择</Button> */}
+            <Form.Item name="receiveDir" noStyle>
+              <Input readOnly/>
+            </Form.Item>
+            <Button type="primary" onClick={handleSelectDir}>选择</Button>
           </Space.Compact>
         </Form.Item>
         <Form.Item<FormData>

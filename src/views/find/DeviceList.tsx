@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { IDevice, IQueryRes } from './types'
+import type { IQueryRes } from './types'
 
 import MacIcon from '../../assets/MacBook.svg'
 
@@ -12,7 +12,7 @@ export interface IDevicesProps {
 
 export const DeviceItem: React.FC<IQueryRes> = (props) => {
   const { data } = props
-  const { nickname, platform, color, deviceName } = data
+  const { nickname, color, deviceName } = data
   return (
     <div className="device-item">
       <div className="device-item__icon">

@@ -1,36 +1,34 @@
 import { invoke } from '@tauri-apps/api'
 import type { CollapseProps } from 'antd'
-import { Button, Collapse, theme } from 'antd'
+import { Button, Collapse } from 'antd'
 import { useState } from 'react'
 
-import { Platfrom } from '../../utils'
-
 import DeviceList from './DeviceList'
-import type { IDevice, IQueryRes } from './types'
+import type { IQueryRes } from './types'
 
-const { useToken } = theme
+// const { useToken } = theme
 
 function Find() {
-  const { token } = useToken()
-  const onlineDevice: IDevice[] = [
-    {
-      platform: Platfrom.MAC,
-      nickname: 'cavin',
-      deviceName: 'mac 001',
-      color: token.colorSuccessActive,
-    },
-  ]
+  // const { token } = useToken()
+  // const onlineDevice: IDevice[] = [
+  //   {
+  //     platform: Platfrom.MAC,
+  //     nickname: 'cavin',
+  //     deviceName: 'mac 001',
+  //     color: token.colorSuccessActive,
+  //   },
+  // ]
 
   const [devices, setDevices] = useState<IQueryRes[]>([])
 
-  const offlineDevice: IDevice[] = [
-    {
-      platform: Platfrom.MAC,
-      nickname: 'cavin',
-      deviceName: 'mac 001',
-      color: token.colorErrorActive,
-    },
-  ]
+  // const offlineDevice: IDevice[] = [
+  //   {
+  //     platform: Platfrom.MAC,
+  //     nickname: 'cavin',
+  //     deviceName: 'mac 001',
+  //     color: token.colorErrorActive,
+  //   },
+  // ]
 
   const items: CollapseProps['items'] = [
     {

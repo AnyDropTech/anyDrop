@@ -8,6 +8,9 @@ dependencies:
   '@ant-design/icons':
     specifier: ^5.2.5
     version: 5.2.5(react-dom@18.2.0)(react@18.2.0)
+  '@tauri-apps/plugin-dialog':
+    specifier: 2.0.0-alpha.1
+    version: 2.0.0-alpha.1
   '@tauri-apps/plugin-fs':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
@@ -1099,6 +1102,12 @@ packages:
       '@tauri-apps/cli-win32-ia32-msvc': 2.0.0-alpha.11
       '@tauri-apps/cli-win32-x64-msvc': 2.0.0-alpha.11
     dev: true
+
+  /@tauri-apps/plugin-dialog@2.0.0-alpha.1:
+    resolution: {integrity: sha512-Fqv7zB7qvR6DkcH1dafHcRRNWRSFwj637/G2MQ+kKrmk1ErfV95lcYjpIhmUaETQSPKeogSI6A78kSnO89cvHQ==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-alpha.6
+    dev: false
 
   /@tauri-apps/plugin-fs@2.0.0-alpha.1:
     resolution: {integrity: sha512-snIDRAFgg3vi73TwiDQkM3+zBTDRvBXgGd7BAsSW7MQ+/3cJM4XcyPcYkv9X6jpgIiQrbWsDGs/KM4ob247K7A==}
