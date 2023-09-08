@@ -9,26 +9,9 @@ import type { IQueryRes } from './types'
 // const { useToken } = theme
 
 function Find() {
-  // const { token } = useToken()
-  // const onlineDevice: IDevice[] = [
-  //   {
-  //     platform: Platfrom.MAC,
-  //     nickname: 'cavin',
-  //     deviceName: 'mac 001',
-  //     color: token.colorSuccessActive,
-  //   },
-  // ]
+  const { token } = useToken()
 
   const [devices, setDevices] = useState<IQueryRes[]>([])
-
-  // const offlineDevice: IDevice[] = [
-  //   {
-  //     platform: Platfrom.MAC,
-  //     nickname: 'cavin',
-  //     deviceName: 'mac 001',
-  //     color: token.colorErrorActive,
-  //   },
-  // ]
 
   const items: CollapseProps['items'] = [
     {
@@ -45,27 +28,21 @@ function Find() {
 
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
+  const queryDevice = () => {
+    invoke('query_service', { magicString: 'hello' }).then((res: any) => {
+      console.log(res)
+      setDevices(devices.concat(res))
+    })
+  }
+
   const handleOpen = () => {
     invoke('start_broadcast_command', { magicString: 'hello', data: { name: '1', test: '2' } }).then((res) => {
       console.log(res)
-
-      invoke<IQueryRes>('query_service', { magicString: 'hello' }).then((res) => {
-        setDevices(devices.concat(res))
-      })
+      queryDevice()
     }).catch((e) => {
       console.error(e)
     })
   }
-
-  // useEffect(() => {
-  //   // invoke('list_network_devices')
-  //   //   .then((response) => {
-  //   //     setDevices(response)
-  //   //   })
-  //   //   .catch((error) => {
-  //   //     console.error('Error:', error)
-  //   //   })
-  // }, [])
 
   return (
     <div className="page-home">

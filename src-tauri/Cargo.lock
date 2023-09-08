@@ -73,6 +73,7 @@ dependencies = [
  "mdns",
  "mdns-sd",
  "names",
+ "rfd",
  "serde",
  "serde_json",
  "tauri",
