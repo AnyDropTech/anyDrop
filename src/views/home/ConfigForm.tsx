@@ -1,6 +1,6 @@
-import { downloadDir } from '@tauri-apps/api/path'
+import { downloadDir, homeDir } from '@tauri-apps/api/path'
 import { invoke } from '@tauri-apps/api/tauri'
-import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { BaseDirectory, metadata, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { hostname, platform } from '@tauri-apps/plugin-os'
 import type { FormInstance } from 'antd'
 import { Button, Card, Form, Input, Space, Switch } from 'antd'
@@ -20,10 +20,23 @@ interface FormData {
 }
 
 async function saveConfig(config: FormData) {
-  await writeTextFile('app.conf', JSON.stringify(config), { dir: BaseDirectory.AppConfig })
-  readTextFile('app.conf', { dir: BaseDirectory.AppConfig }).then((res) => {
+  await writeTextFile('app.conf', JSON.stringify(config), { dir: BaseDirectory.Home })
+  readTextFile('app.conf', { dir: BaseDirectory.Home }).then((res) => {
     console.log(res)
   })
+}
+
+async function checkConfig() {
+  try {
+    const appConfigPath = await homeDir()
+    const configFilePath = `${appConfigPath}/app.conf`
+    const meta = await metadata(configFilePath)
+    return meta.permissions.readonly === false
+  }
+  catch (error) {
+    return false
+  }
+  // console.log('🚀 ~ file: ConfigForm.tsx:36 ~ getLocaleIp ~ saveContent:', saveContent)
 }
 
 function ConfigForm() {
@@ -32,21 +45,56 @@ function ConfigForm() {
 
   const getLocaleIp = useCallback(async () => {
     const ip = await invoke<string>('get_locale_ip')
+    const checkRef = await checkConfig()
+    console.log('🚀 ~ file: ConfigForm.tsx:49 ~ getLocaleIp ~ checkRef:', checkRef)
+    if (checkRef) {
+      const saveContent = await readTextFile('app.conf', { dir: BaseDirectory.Home })
+      const config = (() => {
+        try {
+          return JSON.parse(saveContent)
+        }
+        catch (error) {
+          return null
+        }
+      })()
 
-    const hostName = await hostname()
-    console.log('🚀 ~ file: ConfigForm.tsx:35 ~ getLocaleIp ~ hostName:', hostName)
+      if (config) {
+        form.setFieldsValue({ ...config, ip })
+      }
+      else {
+        const hostName = await hostname()
 
-    const password = uuid()
-    const nickname = `AnyDrop_${randomNum(4).toString()}`
-    // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
-    const dirName = await downloadDir()
-    const _platform = await platform()
-    console.log('🚀 ~ file: ConfigForm.tsx:43 ~ getLocaleIp ~ dirName:', `${dirName}/AnyDropFiles`)
-    form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
+        const password = uuid()
+        const nickname = `AnyDrop_${randomNum(4).toString()}`
+        // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
+        const dirName = await downloadDir()
+        const _platform = await platform()
+        form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
+      }
+      console.log('🚀 ~ file: ConfigForm.tsx:36 ~ getLocaleIp ~ saveContent:', saveContent)
+    }
+    else {
+      const hostName = await hostname()
+
+      const password = uuid()
+      const nickname = `AnyDrop_${randomNum(4).toString()}`
+      // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
+      const dirName = await downloadDir()
+      const _platform = await platform()
+      form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
+    }
   }, [])
 
   const handleFormFinish = (values: FormData) => {
     saveConfig(values)
+  }
+
+  const handleSelectPath = () => {
+    invoke<string>('get_user_savepath').then((res) => {
+      console.log('🚀 ~ file: ConfigForm.tsx:56 ~ handleSelectPath ~ res', res)
+      if (res)
+        form.setFieldsValue({ receiveDir: res })
+    })
   }
 
   useEffect(() => {
@@ -109,8 +157,12 @@ function ConfigForm() {
           name="receiveDir"
         >
           <Space.Compact block style={{ width: '100%' }}>
+          <Form.Item<FormData>
+            name="receiveDir"
+          >
             <Input readOnly/>
-            {/* <Button type="primary">选择</Button> */}
+          </Form.Item>
+            <Button type="primary" onClick={handleSelectPath}>选择</Button>
           </Space.Compact>
         </Form.Item>
         <Form.Item<FormData>
