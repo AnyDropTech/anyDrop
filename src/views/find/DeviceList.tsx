@@ -1,17 +1,18 @@
 import React from 'react'
 
-import type { IDevice } from './types'
+import type { IDevice, IQueryRes } from './types'
 
 import MacIcon from '../../assets/MacBook.svg'
 
 import './DeviceList.scss'
 
 export interface IDevicesProps {
-  listData: IDevice[]
+  listData: IQueryRes[]
 }
 
-export const DeviceItem: React.FC<IDevice> = (props) => {
-  const { nickname, platform, color, deviceName } = props
+export const DeviceItem: React.FC<IQueryRes> = (props) => {
+  const { data } = props
+  const { nickname, platform, color, deviceName } = data
   return (
     <div className="device-item">
       <div className="device-item__icon">
@@ -30,7 +31,7 @@ export default function DeviceList(props: IDevicesProps) {
   return (
     <div className="device-list">
       {props.listData.map(item => (
-        <DeviceItem key={item.nickname} {...item} />
+        <DeviceItem key={item.fullname} {...item} />
       ))}
     </div>
   )

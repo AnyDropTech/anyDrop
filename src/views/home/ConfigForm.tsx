@@ -1,8 +1,12 @@
+import { downloadDir } from '@tauri-apps/api/path'
 import { invoke } from '@tauri-apps/api/tauri'
 import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { hostname, platform } from '@tauri-apps/plugin-os'
 import type { FormInstance } from 'antd'
 import { Button, Card, Form, Input, Space, Switch } from 'antd'
 import React, { useCallback, useEffect } from 'react'
+
+import { randomNum, uuid } from '../../utils'
 
 interface FormData {
   ip: string
@@ -23,12 +27,22 @@ async function saveConfig(config: FormData) {
 }
 
 function ConfigForm() {
-  const [form] = Form.useForm()
+  const [form] = Form.useForm<FormData>()
   const formRef = React.useRef<FormInstance>(null)
 
   const getLocaleIp = useCallback(async () => {
     const ip = await invoke<string>('get_locale_ip')
-    formRef.current?.setFieldsValue({ ip })
+
+    const hostName = await hostname()
+    console.log('🚀 ~ file: ConfigForm.tsx:35 ~ getLocaleIp ~ hostName:', hostName)
+
+    const password = uuid()
+    const nickname = `AnyDrop_${randomNum(4).toString()}`
+    // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
+    const dirName = await downloadDir()
+    const _platform = await platform()
+    console.log('🚀 ~ file: ConfigForm.tsx:43 ~ getLocaleIp ~ dirName:', `${dirName}/AnyDropFiles`)
+    form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
   }, [])
 
   const handleFormFinish = (values: FormData) => {
@@ -96,7 +110,7 @@ function ConfigForm() {
         >
           <Space.Compact block style={{ width: '100%' }}>
             <Input readOnly/>
-            <Button type="primary">选择</Button>
+            {/* <Button type="primary">选择</Button> */}
           </Space.Compact>
         </Form.Item>
         <Form.Item<FormData>
