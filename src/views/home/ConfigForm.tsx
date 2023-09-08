@@ -11,11 +11,11 @@ import { randomNum, uuid } from '../../utils'
 interface FormData {
   ip: string
   nickname: string
-  deviceName: string
+  device_name: string
   password: string
   receive: boolean
-  autoReceive: boolean
-  receiveDir: string
+  auto_receive: boolean
+  receive_dir: string
   history: boolean
 }
 
@@ -66,7 +66,7 @@ function ConfigForm() {
         const nickname = `AnyDrop_${randomNum(4).toString()}`
         const dirName = await downloadDir()
         const _platform = await platform()
-        form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
+        form.setFieldsValue({ ip, device_name: hostName || '', password, nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, auto_receive: true, receive: true, history: true })
       }
     }
     else {
@@ -77,11 +77,12 @@ function ConfigForm() {
       // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
       const dirName = await downloadDir()
       const _platform = await platform()
-      form.setFieldsValue({ ip, deviceName: hostName || '', password, nickname, receiveDir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles` })
+      form.setFieldsValue({ ip, device_name: hostName || '', password, nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, auto_receive: true, receive: true, history: true })
     }
 
     if (!checkRef) {
       const config = form.getFieldsValue()
+      console.log("🚀 ~ file: ConfigForm.tsx:85 ~ getLocaleIp ~ config:", config)
       await saveConfig(config)
     }
   }, [])
@@ -93,7 +94,7 @@ function ConfigForm() {
   const handleSelectPath = () => {
     invoke<string>('get_user_savepath').then((res) => {
       if (res)
-        form.setFieldsValue({ receiveDir: res })
+        form.setFieldsValue({ receive_dir: res })
     })
   }
 
@@ -118,59 +119,58 @@ function ConfigForm() {
           label="本机IP"
           name="ip"
         >
-          <Input readOnly/>
+          <Input readOnly />
         </Form.Item>
         <Form.Item<FormData>
           label="你的昵称"
           name="nickname"
         >
-          <Input readOnly/>
+          <Input readOnly />
         </Form.Item>
         <Form.Item<FormData>
           label="设备名称"
-          name="deviceName"
+          name="device_name"
         >
-          <Input readOnly/>
+          <Input readOnly />
         </Form.Item>
         <Form.Item<FormData>
           label="本机传输密码"
           name="password"
         >
-          <Input readOnly/>
+          <Input readOnly />
         </Form.Item>
         <Form.Item<FormData>
           label="本机可被发现"
           name="receive"
           valuePropName="checked"
         >
-          <Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked />
+          <Switch checkedChildren="开启" unCheckedChildren="关闭" />
         </Form.Item>
         <Form.Item<FormData>
           label="自动接收"
-          name="autoReceive"
+          name="auto_receive"
           valuePropName="checked"
         >
-          <Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked />
+          <Switch checkedChildren="开启" unCheckedChildren="关闭" />
         </Form.Item>
         <Form.Item<FormData>
           label="保存位置"
-          name="receiveDir"
         >
           <Space.Compact block style={{ width: '100%' }}>
-          <Form.Item<FormData>
-            name="receiveDir"
-          >
-            <Input readOnly/>
-          </Form.Item>
+            <Form.Item<FormData>
+              name="receive_dir"
+            >
+              <Input readOnly />
+            </Form.Item>
             <Button type="primary" onClick={handleSelectPath}>选择</Button>
           </Space.Compact>
         </Form.Item>
         <Form.Item<FormData>
           label="历史记录"
-          name="autoReceive"
+          name="history"
           valuePropName="checked"
         >
-          <Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked />
+          <Switch checkedChildren="开启" unCheckedChildren="关闭" />
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>

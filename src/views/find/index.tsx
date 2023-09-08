@@ -40,8 +40,6 @@ async function getConfig() {
 }
 
 function Find() {
-  const { token } = useToken()
-
   const [devices, setDevices] = useState<IQueryRes[]>([])
 
   const items: CollapseProps['items'] = [
@@ -68,6 +66,7 @@ function Find() {
   const handleOpen = async () => {
     const config = await getConfig()
     if (config) {
+      console.log("🚀 ~ file: index.tsx:69 ~ handleOpen ~ config:", config)
       invoke('start_broadcast_command', { data: config }).then((res) => {
         console.log(res)
         queryDevice()
