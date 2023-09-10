@@ -1,9 +1,10 @@
 import { invoke } from '@tauri-apps/api'
+import { listen } from '@tauri-apps/api/event'
 import { BaseDirectory, homeDir } from '@tauri-apps/api/path'
 import { metadata, readTextFile } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
-import { Button, Collapse } from 'antd'
-import { useState } from 'react'
+import { Button, Collapse, message } from 'antd'
+import { useEffect, useState } from 'react'
 
 import DeviceList from './DeviceList'
 import type { IQueryRes } from './types'
@@ -57,19 +58,19 @@ function Find() {
 
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
-  const queryDevice = () => {
-    invoke('query_service', { magicString: 'hello' }).then((res: any) => {
-      setDevices(devices.concat(res))
+  const queryDevice = (password: string) => {
+    invoke('query_service', { password }).then(() => {
+      message.success('开启成功')
     })
   }
 
   const handleOpen = async () => {
     const config = await getConfig()
     if (config) {
-      console.log("🚀 ~ file: index.tsx:69 ~ handleOpen ~ config:", config)
+      console.log('🚀 ~ file: index.tsx:69 ~ handleOpen ~ config:', config)
       invoke('start_broadcast_command', { data: config }).then((res) => {
         console.log(res)
-        queryDevice()
+        queryDevice(config.password)
       }).catch((e) => {
         console.error(e)
       })
@@ -78,6 +79,13 @@ function Find() {
       alert('配置文件不存在')
     }
   }
+
+  useEffect(() => {
+    listen<IQueryRes[]>('service_discovery', (event) => {
+      console.log(`Got error in window ${event.windowLabel}, payload: ${event.payload}`, event.payload)
+      setDevices(event.payload)
+    })
+  }, [])
 
   return (
     <div className="page-home">

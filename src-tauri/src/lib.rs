@@ -1,7 +1,7 @@
 mod discovery;
 
 use local_ipaddress;
-use std::collections::HashMap;
+use tauri::Window;
 
 use rfd::FileDialog;
 
@@ -12,13 +12,6 @@ fn start_discovery_command() {
   // register_service();
 }
 
-// #[tauri::command]
-// pub fn get_save_dirpath() -> String {
-//   // let folder = FileDialog::new().pick_folder();
-//   // let folder = folder.unwrap_or_default();
-//   // String::from(folder.to_str().unwrap_or_default())
-// }
-
 #[tauri::command]
 fn get_user_savepath() -> String {
   let folder = FileDialog::new().pick_folder();
@@ -28,38 +21,17 @@ fn get_user_savepath() -> String {
 
 #[tauri::command]
 fn start_broadcast_command(data: ClientDevice)  {
+  println!("++++++++++++++++data: {:?}", data);
   let _res = register_service(data);
 
   format!("{}", "success");
 }
 
 #[tauri::command]
-fn query_service(magic_string: &str) -> serde_json::Value {
-
-  let res = query(magic_string);
-
-  let info = res.unwrap();
-
-  let pr = info.4.iter();
-
-  let mut data = serde_json::Map::new();
-
-  for ppr in  pr {
-    let key = ppr.key();
-    let val = ppr.val().unwrap().to_owned().pop().clone().unwrap();
-    println!("ppr, {:?}, {:?}, {:?}", ppr, key, &val);
-    data.insert(key.to_owned(), serde_json::Value::Number(val.into()));
-  }
-
-  let mut result = serde_json::Map::new();
-  result.insert("data".to_string(), serde_json::Value::Object(data));
-  result.insert("fullname".to_string(), serde_json::Value::String(info.1.to_string()));
-  result.insert("host_name".to_string(), serde_json::Value::String(info.2.to_string()));
-  result.insert("port".to_string(), serde_json::Value::Number(info.3.into()));
-  result.insert("ip_addrs".to_string(), serde_json::Value::Array(info.0.iter().map(|i| serde_json::Value::String(i.to_string())).collect()));
-
-  let json_value = serde_json::Value::Object(result);
-  json_value
+fn query_service(window: Window, password: &str) -> String {
+  query(window, password);
+  let a = "success".to_string();
+  a
 }
 
 #[tauri::command]
@@ -69,6 +41,10 @@ fn get_locale_ip() -> String {
   format!("{}", ip)
 }
 
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+  message: String,
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

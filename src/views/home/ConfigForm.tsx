@@ -82,7 +82,7 @@ function ConfigForm() {
 
     if (!checkRef) {
       const config = form.getFieldsValue()
-      console.log("🚀 ~ file: ConfigForm.tsx:85 ~ getLocaleIp ~ config:", config)
+      console.log('🚀 ~ file: ConfigForm.tsx:85 ~ getLocaleIp ~ config:', config)
       await saveConfig(config)
     }
   }, [])
