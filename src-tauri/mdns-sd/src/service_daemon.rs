@@ -525,7 +525,18 @@ impl ServiceDaemon {
               println!("zc.counters {:?}", zc.counters);
 
               println!("zc.my_services: {:?}", zc.my_services);
-              println!("zc.intf_socks.keys(), {:?}", zc.intf_socks);
+              println!("zc.intf_socks.keys(), {:?}", zc.intf_socks.keys());
+              println!("zc.queriers: {:?}", zc.queriers);
+              println!("announce service: {}", &fullname);
+              println!("zc.zc.my_services.get(&fullname): {:?}", zc.my_services.get(&fullname));
+
+              match zc.my_services.get(&fullname) {
+                Some(info) => {
+                  println!("info {:?}", info);
+
+                }
+                None => debug!("announce: cannot find such service {}", &fullname),
+              }
             }
 
             _ => {
