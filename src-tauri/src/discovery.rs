@@ -206,6 +206,7 @@ pub fn query_handler (window: Window, password: &str) {
       println!("info {:?}", result_vec.clone());
       let _ = window.emit("service_discovery", result_vec.clone());
       std::thread::sleep(Duration::from_secs(10));
+      mdns.verify(fullname.clone());
     }
   });
 }
