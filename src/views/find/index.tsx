@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api'
-import { listen } from '@tauri-apps/api/event'
 import { BaseDirectory, homeDir } from '@tauri-apps/api/path'
 import { metadata, readTextFile } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
@@ -8,6 +7,7 @@ import { useEffect, useState } from 'react'
 
 import DeviceList from './DeviceList'
 import type { IQueryRes } from './types'
+import { listen } from '@tauri-apps/api/event'
 
 // const { useToken } = theme
 
@@ -63,7 +63,6 @@ function Find() {
       message.success('开启成功')
     })
   }
-
   const handleOpen = async () => {
     const config = await getConfig()
     if (config) {
@@ -81,9 +80,9 @@ function Find() {
   }
 
   useEffect(() => {
-    listen<IQueryRes[]>('service_discovery', (event) => {
-      console.log(`Got error in window ${event.windowLabel}, payload: ${event.payload}`, event.payload)
-      setDevices(event.payload)
+    listen<IQueryRes[]>('service_discovery', (data) => {
+      console.log('🚀 ~ file: index.tsx:81 ~ listen ~ data', data)
+      setDevices(data.payload)
     })
   }, [])
 

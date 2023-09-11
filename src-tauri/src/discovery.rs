@@ -3,7 +3,7 @@ mod utils;
 use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 use std::time::Duration;
-use serde_json::{ Value, json };
+use serde_json::Value;
 
 use mdns_sd::{ServiceDaemon, ServiceInfo, ServiceEvent, TxtProperties};
 
@@ -40,17 +40,17 @@ pub struct ClientDevice {
 }
 
 impl ClientDevice {
-  fn to_hashmap(&self) -> HashMap<String, String> {
-      let mut map = HashMap::new();
-      map.insert("nickname".to_string(), self.nickname.to_string().clone());
-      map.insert("device_name".to_string(), self.device_name.to_string().clone());
-      map.insert("password".to_string(), self.password.to_string().clone());
-      map.insert("receive".to_string(), self.receive.to_string().clone());
-      map.insert("auto_receive".to_string(), self.auto_receive.to_string().clone());
-      map.insert("receive_dir".to_string(), self.receive_dir.to_string().clone());
-      map.insert("history".to_string(), self.history.to_string().clone());
-      map
-  }
+  // fn to_hashmap(&self) -> HashMap<String, String> {
+  //     let mut map = HashMap::new();
+  //     map.insert("nickname".to_string(), self.nickname.to_string().clone());
+  //     map.insert("device_name".to_string(), self.device_name.to_string().clone());
+  //     map.insert("password".to_string(), self.password.to_string().clone());
+  //     map.insert("receive".to_string(), self.receive.to_string().clone());
+  //     map.insert("auto_receive".to_string(), self.auto_receive.to_string().clone());
+  //     map.insert("receive_dir".to_string(), self.receive_dir.to_string().clone());
+  //     map.insert("history".to_string(), self.history.to_string().clone());
+  //     map
+  // }
 }
 
 pub fn register_service(data: ClientDevice) -> AResult<()> {
@@ -123,7 +123,6 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
       println!("Daemon event: {:?}", &event);
     }
   });
-
   Ok(())
 }
 
@@ -157,93 +156,56 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
   json_value
 }
 
-pub fn query(window: Window, password: &str) {
+pub fn query_handler (window: Window, password: &str) {
   // Create a daemon
   let mdns = ServiceDaemon::new().expect("Failed to create daemon");
 
-  let receiver = mdns.browse(&SERVICE_TYPE).expect("Failed to browse");
+  let receiver = mdns.browse(&SERVICE_TYPE).unwrap();
 
-  // let now = std::time::Instant::now();
   let fullname = format!("{}.{}", password, SERVICE_TYPE);
-  let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
-  std::thread::spawn(move || {
-    loop {
-      if let ServiceEvent::ServiceResolved(info) = receiver.recv().unwrap() {
-        let service_info = info.clone();
-        println!("test ================== {:?} +++++ {:?}", service_info, service_info.get_type());
-        if service_info.get_fullname() == fullname {
 
-        };
-        if service_info.get_type() == SERVICE_TYPE && service_info.get_fullname() != fullname {
-          println!("test ================== {:?}", service_info);
-          let res = parse_info((
-            service_info.clone().get_addresses().clone(),
-            service_info.clone().get_fullname().clone().to_string(),
-            service_info.clone().get_hostname().clone().to_string(),
-            service_info.clone().get_port().clone(),
-            service_info.clone().get_properties().clone(),
-          ));
-          // 将结果添加到HashMap中
-          let exists = result_vec.iter().any(|item| *item == res);
-          println!("exists, {:?}", exists);
-          if !exists {
-            result_vec.push(res.clone());
+  let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
+
+
+  std::thread::spawn(move || {
+    while let Ok(event) = receiver.recv() {
+      match event {
+        ServiceEvent::SearchStarted(ty_domain) => {
+            println!("Search started for {}", &ty_domain);
+        }
+        ServiceEvent::ServiceFound(_ty_domain, fullname) => {
+            println!("Found a new service: {}", &fullname);
+        }
+        ServiceEvent::ServiceResolved(info) => {
+          let service_info = info.clone();
+          if service_info.get_type() == SERVICE_TYPE && service_info.get_fullname() != fullname {
+            println!("test ================== {:?}", service_info);
+            let res = parse_info((
+              service_info.clone().get_addresses().clone(),
+              service_info.clone().get_fullname().clone().to_string(),
+              service_info.clone().get_hostname().clone().to_string(),
+              service_info.clone().get_port().clone(),
+              service_info.clone().get_properties().clone(),
+            ));
+            // 将结果添加到HashMap中
+            let exists = result_vec.iter().any(|item| *item == res);
+            println!("exists, {:?}", exists);
+            if !exists {
+              result_vec.push(res.clone());
+            }
           }
         }
+        ServiceEvent::ServiceRemoved(service_type, service_fullname) => {
+          println!("========================removed: {:?}-{:?}", service_type, service_fullname);
+        }
+        ServiceEvent::SearchStopped(ty) => {
+          println!("Search stopped for {}", &ty);
+        }
       }
+
       println!("info {:?}", result_vec.clone());
       let _ = window.emit("service_discovery", result_vec.clone());
       std::thread::sleep(Duration::from_secs(10));
-    };
+    }
   });
-
-  //   if let Ok(ServiceEvent::ServiceResolved(info)) = receiver.recv_timeout(Duration::from_secs(10)) {
-  //     let service_info = info.clone();
-  //     println!("test ================== {:?} +++++ {:?}", service_info, service_info.get_type());
-
-  //     if service_info.get_type() == SERVICE_TYPE {
-  //       println!("test ================== {:?}", service_info);
-  //       let res = parse_info((
-  //         service_info.clone().get_addresses().clone(),
-  //         service_info.clone().get_fullname().clone().to_string(),
-  //         service_info.clone().get_hostname().clone().to_string(),
-  //         service_info.clone().get_port().clone(),
-  //         service_info.clone().get_properties().clone(),
-  //       ));
-  //       // 将结果添加到HashMap中
-  //       result_vec.push(res.clone());
-  //       // result_set.insert(res.clone());
-  //       // window.emit("service_discovery", res);
-  //     }
-  //     // std::thread::sleep(Duration::from_secs(10));
-  //   };
-  //   let _ = window.emit("service_discovery", result_vec.clone());
-  //   // 添加延迟等待10秒再进行下一次扫描
-  // });
-
-  // std::thread::spawn(move || {
-  //     let mut result_set = HashSet::new<serde_json::Values>(); // 创建一个HashMap来存储结果
-  //     while if let Ok(ServiceEvent::ServiceResolved(info)) = receiver.recv() {
-  //         let _info = info.clone();
-  //         println!("Found service: {:?}, {:?}", _info, info.get_type());
-  //         if info.get_type() == SERVICE_TYPE {
-  //             let _info = (
-  //               _info.clone().get_addresses().clone(),
-  //               _info.clone().get_fullname().clone().to_string(),
-  //               _info.clone().get_hostname().clone().to_string(),
-  //               _info.clone().get_port().clone(),
-  //               _info.clone().get_properties().clone(),
-  //             );
-  //             let res = parse_info(_info.clone());
-  //             // 将结果添加到HashMap中
-  //             result_set.insert(res.clone())
-  //             // window.emit("service_discovery", res);
-  //         }
-  //     }
-  //   }
-  //      // 添加定时延迟，例如每隔5秒执行一次扫描
-  //      std::thread::sleep(Duration::from_secs(5));
-  //   // 扫描结束后，通过事件将整个HashMap返回
-  //   window.emit("service_discovery", result_set);
-  // });
 }

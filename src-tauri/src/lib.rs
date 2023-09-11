@@ -5,7 +5,7 @@ use tauri::Window;
 
 use rfd::FileDialog;
 
-use discovery::{register_service, query, ClientDevice};
+use discovery::{register_service, ClientDevice, query_handler};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -29,7 +29,7 @@ fn start_broadcast_command(data: ClientDevice)  {
 
 #[tauri::command]
 fn query_service(window: Window, password: &str) -> String {
-  query(window, password);
+  query_handler(window, password);
   let a = "success".to_string();
   a
 }
