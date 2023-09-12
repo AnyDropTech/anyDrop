@@ -79,6 +79,17 @@ function Find() {
     }
   }
 
+  const handleClose = async () => {
+    const config = await getConfig()
+    if (config) {
+      invoke('unregister_service', { password: config.password }).then((res) => {
+        console.log(res)
+      }).catch((e) => {
+        console.error(e)
+      })
+    }
+  }
+
   useEffect(() => {
     listen<IQueryRes[]>('service_discovery', (data) => {
       console.log('🚀 ~ file: index.tsx:81 ~ listen ~ data', data)
@@ -91,6 +102,7 @@ function Find() {
       <div className="page-header">AnyDrop V0.0.1</div>
       <div className="page-content">
         <Button type="primary" onClick={handleOpen}>开启</Button>
+        <Button type="primary" onClick={handleClose }>关闭</Button>
         <List />
       </div>
     </div>

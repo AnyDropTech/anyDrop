@@ -5,7 +5,7 @@ use tauri::Window;
 
 use rfd::FileDialog;
 
-use discovery::{register_service, ClientDevice, query_handler};
+use discovery::{register_service, ClientDevice, query_handler, unregister};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -23,6 +23,14 @@ fn get_user_savepath() -> String {
 fn start_broadcast_command(data: ClientDevice)  {
   println!("++++++++++++++++data: {:?}", data);
   let _res = register_service(data);
+
+  format!("{}", "success");
+}
+
+#[tauri::command]
+fn unregister_service(password: &str)  {
+  println!("++++++++++++++++data: {:?}", password);
+  let _res = unregister(password);
 
   format!("{}", "success");
 }
@@ -51,7 +59,7 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_os::init())
-    .invoke_handler(tauri::generate_handler![get_locale_ip, start_broadcast_command, start_discovery_command, query_service, get_user_savepath])
+    .invoke_handler(tauri::generate_handler![get_locale_ip, start_broadcast_command, start_discovery_command, query_service, get_user_savepath, unregister_service])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
