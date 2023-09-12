@@ -525,10 +525,21 @@ impl ServiceDaemon {
               println!("zc.counters {:?}", zc.counters);
 
               println!("zc.my_services: {:?}", zc.my_services);
-              println!("zc.intf_socks.keys(), {:?}", zc.intf_socks.keys());
+              println!("zc.intf_socks.keys(), {:?}", &zc.intf_socks);
               println!("zc.queriers: {:?}", zc.queriers);
               println!("announce service: {}", &fullname);
               println!("zc.zc.my_services.get(&fullname): {:?}", zc.my_services.get(&fullname));
+              let mut i = 0;
+              while i < zc.retransmissions.len() {
+                println!("{:?}",zc.retransmissions[i].command);
+                if let Command::Browse(t, port, event) = &zc.retransmissions[i].command {
+                  println!("{:?} {:?} {:?}", t, port, event.try_send(ServiceEvent::SearchStarted(format!(
+                    "{} on addrs {:?}",
+                    &t, &zc.intf_socks.keys()
+                  ))));
+                }
+                i += 1;
+              }
 
               match zc.my_services.get(&fullname) {
                 Some(info) => {
