@@ -274,11 +274,15 @@ impl ServiceDaemon {
             })
     }
 
-    pub fn verify(&self, fullname: String) {
-      let _ = self.sender.try_send(Command::Verify(fullname)).map_err(|e| match e {
+    pub fn verify(&self, fullname: String, tr_domain: String) -> Result<Receiver<ServiceEvent>> {
+      let (resp_s, resp_r) = bounded(10);
+      let _ = self.sender.try_send(Command::Verify(fullname, tr_domain, resp_s)).map_err(|e| match e {
         TrySendError::Full(_) => Error::Again,
         e => e_fmt!("flume::channel::send failed: {}", e),
-    });
+      });
+
+      Ok(resp_r)
+
     }
 
     /// The main event loop of the daemon thread
@@ -520,7 +524,7 @@ impl ServiceDaemon {
                 zc.process_set_option(daemon_opt);
             }
 
-            Command::Verify(fullname) => {
+            Command::Verify(fullname, ty_domain, sender) => {
               println!("verify: {:?}", fullname);
               println!("zc.counters {:?}", zc.counters);
 
@@ -529,13 +533,18 @@ impl ServiceDaemon {
               println!("zc.queriers: {:?}", zc.queriers);
               println!("announce service: {}", &fullname);
               println!("zc.zc.my_services.get(&fullname): {:?}", zc.my_services.get(&fullname));
-
-              match zc.my_services.get(&fullname) {
-                Some(info) => {
-                  println!("info {:?}", info);
-
+              let mut offline = true;
+              if let Some(records) = zc.cache.ptr.get(&ty_domain) {
+                for record in records.iter() {
+                    if let Some(ptr) = record.any().downcast_ref::<DnsPointer>() {
+                        println!("ptr: {:?}", ptr.alias);
+                        offline = false;
+                    }
                 }
-                None => debug!("announce: cannot find such service {}", &fullname),
+              }
+              match sender.send(ServiceEvent::VerifyClient(fullname, ty_domain, offline)) {
+                Ok(()) => debug!("Sent SearchStopped to the listener"),
+                Err(e) => error!("Failed to send SearchStopped: {}", e),
               }
             }
 
@@ -1436,6 +1445,8 @@ pub enum ServiceEvent {
     ServiceRemoved(String, String),
     /// Stopped searching for a service type.
     SearchStopped(String),
+    // verify offline (fullname, service_type, offline)
+    VerifyClient(String, String, bool)
 }
 
 /// Some notable events from the daemon besides [`ServiceEvent`].
@@ -1487,7 +1498,7 @@ enum Command {
 
     Exit,
 
-    Verify(String)
+    Verify(String, String, Sender<ServiceEvent>)
 }
 
 #[derive(Debug)]

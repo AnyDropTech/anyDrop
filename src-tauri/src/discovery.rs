@@ -166,7 +166,6 @@ pub fn query_handler (window: Window, password: &str) {
 
   let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
 
-
   std::thread::spawn(move || {
     while let Ok(event) = receiver.recv() {
       match event {
@@ -178,7 +177,7 @@ pub fn query_handler (window: Window, password: &str) {
         }
         ServiceEvent::ServiceResolved(info) => {
           let service_info = info.clone();
-          if service_info.get_type() == SERVICE_TYPE && service_info.get_fullname() != fullname {
+          if service_info.get_type() == SERVICE_TYPE  {
             println!("test ================== {:?}", service_info);
             let res = parse_info((
               service_info.clone().get_addresses().clone(),
@@ -190,9 +189,11 @@ pub fn query_handler (window: Window, password: &str) {
             // 将结果添加到HashMap中
             let exists = result_vec.iter().any(|item| *item == res);
             println!("exists, {:?}", exists);
-            if !exists {
-              result_vec.push(res.clone());
-            }
+            // if !exists {
+            //   result_vec.push(res.clone());
+            // }
+            result_vec.push(res.clone());
+
           }
         }
         ServiceEvent::ServiceRemoved(service_type, service_fullname) => {
@@ -201,12 +202,23 @@ pub fn query_handler (window: Window, password: &str) {
         ServiceEvent::SearchStopped(ty) => {
           println!("Search stopped for {}", &ty);
         }
+        ServiceEvent::VerifyClient(fullname, service_type, offline) => {
+          println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
+        }
       }
 
       println!("info {:?}", result_vec.clone());
       let _ = window.emit("service_discovery", result_vec.clone());
+      // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
+      let mut i = 0;
+      while i < result_vec.len() {
+        let current = result_vec[i].clone();
+        let fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
+        println!("fullname, {:?}", fullname);
+        let _ = mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
+        i+=1;
+      }
       std::thread::sleep(Duration::from_secs(10));
-      mdns.verify(fullname.clone());
     }
   });
 }
