@@ -123,7 +123,14 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
       println!("Daemon event: {:?}", &event);
     }
   });
+
   Ok(())
+}
+pub fn unregister(password: &str) {
+  let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  let fullname = format!("{}.{}", password, SERVICE_TYPE);
+  println!("Unregistering service {}", &fullname);
+  mdns.unregister(&fullname).expect("Failed to unregister mDNS service");
 }
 
 fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> serde_json::Value {
@@ -211,6 +218,7 @@ pub fn query_handler (window: Window, password: &str) {
       let _ = window.emit("service_discovery", result_vec.clone());
       // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
       let mut i = 0;
+      println!("result_vec.len(), {:?}", result_vec.len());
       while i < result_vec.len() {
         let current = result_vec[i].clone();
         let fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
@@ -218,7 +226,7 @@ pub fn query_handler (window: Window, password: &str) {
         let _ = mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
         i+=1;
       }
-      std::thread::sleep(Duration::from_secs(10));
+      std::thread::sleep(Duration::from_secs(1));
     }
   });
 }

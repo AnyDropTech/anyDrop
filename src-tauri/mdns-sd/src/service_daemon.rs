@@ -527,29 +527,28 @@ impl ServiceDaemon {
             }
 
             Command::Verify(fullname, ty_domain, sender) => {
-              println!("verify: {:?}", fullname);
-              println!("zc.counters {:?}", zc.counters);
-
-              println!("zc.my_services: {:?}", zc.my_services);
-              println!("zc.intf_socks.keys(), {:?}", &zc.intf_socks);
-              println!("zc.queriers: {:?}", zc.queriers);
-              println!("announce service: {}", &fullname);
-              println!("zc.zc.my_services.get(&fullname): {:?}", zc.my_services.get(&fullname));
               let mut offline = true;
               if let Some(records) = zc.cache.ptr.get(&ty_domain) {
                 for record in records.iter() {
                     if let Some(ptr) = record.any().downcast_ref::<DnsPointer>() {
                         println!("ptr: {:?}", ptr.alias);
                         offline = false;
+                        break;
                     }
                 }
               }
+              println!("offline: {:?} +++++++++++++ {:?}", offline, sender.send(ServiceEvent::SearchStarted(ty_domain.clone())));
               match sender.send(ServiceEvent::VerifyClient(fullname, ty_domain, offline)) {
-                Ok(()) => debug!("Sent SearchStopped to the listener"),
-                Err(e) => error!("Failed to send SearchStopped: {}", e),
+                Ok(()) => {
+                  println!("ffffffffffffffff");
+                  debug!("Sent VerifyClient to the listener")
+                },
+                Err(e) => {
+                  println!("eeeeeeeeeeeeeeee{}", e);
+                  error!("Failed to send SearchStopped: {}", e)
+                },
               }
             }
-
             _ => {
                 error!("unexpected command: {:?}", &command);
             }
