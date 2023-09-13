@@ -52,9 +52,17 @@ impl ClientDevice {
   //     map
   // }
 }
-
+static mut MDNS: Option<ServiceDaemon> = None;
 pub fn register_service(data: ClientDevice) -> AResult<()> {
-  let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  // let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  // 获取或初始化 mdns 变量
+  let mdns = unsafe {
+    if MDNS.is_none() {
+        MDNS = Some(ServiceDaemon::new().expect("Could not create service daemon"));
+    }
+    MDNS.as_ref().unwrap()
+  };
+
   let my_addrs: Vec<Ipv4Addr> = utils::my_ipv4_interfaces()
       .iter()
       .map(|i| i.ip)
@@ -116,16 +124,16 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
 
   println!("Registered service {}.{}.{}", &instance_name, &SERVICE_TYPE, service_fullname);
 
-  std::thread::spawn(move || {
-    let wait_in_secs = 20;
-    println!("Sleeping {} seconds before unregister", wait_in_secs);
-    std::thread::sleep(Duration::from_secs(wait_in_secs));
+  // std::thread::spawn(move || {
+  //   let wait_in_secs = 20;
+  //   println!("Sleeping {} seconds before unregister", wait_in_secs);
+  //   std::thread::sleep(Duration::from_secs(wait_in_secs));
 
-    let receiver = mdns.unregister(&service_fullname).unwrap();
-    while let Ok(event) = receiver.recv() {
-        println!("unregister result: {:?}", &event);
-    }
-  });
+  //   let receiver = mdns.unregister(&service_fullname).unwrap();
+  //   while let Ok(event) = receiver.recv() {
+  //       println!("unregister result: {:?}", &event);
+  //   }
+  // });
 
   // Monitor the daemon events.
   std::thread::spawn(move || {
@@ -137,10 +145,16 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
   Ok(())
 }
 pub fn unregister(password: &str) {
-  let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  // let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  let mdns = unsafe {
+    MDNS.as_ref().unwrap()
+  };
   let fullname = format!("{}.{}", password, SERVICE_TYPE);
   println!("Unregistering service {}", &fullname);
-  mdns.unregister(&fullname).expect("Failed to unregister mDNS service");
+  let receiver = mdns.unregister(&fullname).unwrap();
+  while let Ok(event) = receiver.recv() {
+    println!("unregister result: {:?}", &event);
+  }
 }
 
 fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> serde_json::Value {
