@@ -275,7 +275,7 @@ impl ServiceDaemon {
     }
 
     pub fn verify(&self, fullname: String, tr_domain: String) -> Result<Receiver<ServiceEvent>> {
-      let (resp_s, resp_r) = bounded(10);
+      let (resp_s, resp_r) = bounded(2);
       self.sender
             .try_send(Command::Verify(fullname, tr_domain, resp_s))
             .map_err(|e| match e {
@@ -528,6 +528,7 @@ impl ServiceDaemon {
 
             Command::Verify(fullname, ty_domain, sender) => {
               let mut offline = true;
+              println!("++=====+++++{:?}", zc.broadcast_addr);
               if let Some(records) = zc.cache.ptr.get(&ty_domain) {
                 for record in records.iter() {
                     if let Some(ptr) = record.any().downcast_ref::<DnsPointer>() {
@@ -537,17 +538,14 @@ impl ServiceDaemon {
                     }
                 }
               }
-              println!("offline: {:?} +++++++++++++ {:?}", offline, sender.send(ServiceEvent::SearchStarted(ty_domain.clone())));
-              match sender.send(ServiceEvent::VerifyClient(fullname, ty_domain, offline)) {
-                Ok(()) => {
-                  println!("ffffffffffffffff");
-                  debug!("Sent VerifyClient to the listener")
-                },
-                Err(e) => {
-                  println!("eeeeeeeeeeeeeeee{}", e);
-                  error!("Failed to send SearchStopped: {}", e)
-                },
-              }
+              let map = zc.queriers.clone();
+              println!("{:?}", map);
+
+              call_listener(
+                &map,
+                &ty_domain,
+                ServiceEvent::VerifyClient(fullname.clone(), ty_domain.to_string(), offline),
+            );
             }
             _ => {
                 error!("unexpected command: {:?}", &command);

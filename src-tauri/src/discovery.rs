@@ -116,6 +116,16 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
 
   println!("Registered service {}.{}.{}", &instance_name, &SERVICE_TYPE, service_fullname);
 
+  std::thread::spawn(move || {
+    let wait_in_secs = 20;
+    println!("Sleeping {} seconds before unregister", wait_in_secs);
+    std::thread::sleep(Duration::from_secs(wait_in_secs));
+
+    let receiver = mdns.unregister(&service_fullname).unwrap();
+    while let Ok(event) = receiver.recv() {
+        println!("unregister result: {:?}", &event);
+    }
+  });
 
   // Monitor the daemon events.
   std::thread::spawn(move || {
