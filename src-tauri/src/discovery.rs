@@ -116,16 +116,16 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
 
   println!("Registered service {}.{}.{}", &instance_name, &SERVICE_TYPE, service_fullname);
 
-  std::thread::spawn(move || {
-    let wait_in_secs = 20;
-    println!("Sleeping {} seconds before unregister", wait_in_secs);
-    std::thread::sleep(Duration::from_secs(wait_in_secs));
+  // std::thread::spawn(move || {
+  //   let wait_in_secs = 20;
+  //   println!("Sleeping {} seconds before unregister", wait_in_secs);
+  //   std::thread::sleep(Duration::from_secs(wait_in_secs));
 
-    let receiver = mdns.unregister(&service_fullname).unwrap();
-    while let Ok(event) = receiver.recv() {
-        println!("unregister result: {:?}", &event);
-    }
-  });
+  //   let receiver = mdns.unregister(&service_fullname).unwrap();
+  //   while let Ok(event) = receiver.recv() {
+  //       println!("unregister result: {:?}", &event);
+  //   }
+  // });
 
   // Monitor the daemon events.
   std::thread::spawn(move || {
@@ -221,6 +221,19 @@ pub fn query_handler (window: Window, password: &str) {
         }
         ServiceEvent::VerifyClient(fullname, service_type, offline) => {
           println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
+          let mut i = 0;
+          while i < result_vec.len() {
+            let mut current = result_vec[i].clone();
+            let current_fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
+            if current_fullname == fullname {
+              current["offline".to_string()] = serde_json::Value::Bool(offline);
+              result_vec[i] = current;
+              break;
+            }
+            i+=1;
+          };
+          let _ = window.emit("service_discovery", result_vec.clone());
+          continue;
         }
       }
 
