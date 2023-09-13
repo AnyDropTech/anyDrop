@@ -276,10 +276,12 @@ impl ServiceDaemon {
 
     pub fn verify(&self, fullname: String, tr_domain: String) -> Result<Receiver<ServiceEvent>> {
       let (resp_s, resp_r) = bounded(10);
-      let _ = self.sender.try_send(Command::Verify(fullname, tr_domain, resp_s)).map_err(|e| match e {
-        TrySendError::Full(_) => Error::Again,
-        e => e_fmt!("flume::channel::send failed: {}", e),
-      });
+      self.sender
+            .try_send(Command::Verify(fullname, tr_domain, resp_s))
+            .map_err(|e| match e {
+                TrySendError::Full(_) => Error::Again,
+                e => e_fmt!("flume::channel::send failed: {}", e),
+            })?;
 
       Ok(resp_r)
 
