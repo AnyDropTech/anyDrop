@@ -167,6 +167,7 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
   result.insert("host_name".to_string(), serde_json::Value::String(info.2.to_string()));
   result.insert("port".to_string(), serde_json::Value::Number(info.3.into()));
   result.insert("ip_addrs".to_string(), serde_json::Value::Array(info.0.iter().map(|i| serde_json::Value::String(i.to_string())).collect()));
+  result.insert("offline".to_string(), serde_json::Value::Bool(false));
 
   let json_value = serde_json::Value::Object(result);
 

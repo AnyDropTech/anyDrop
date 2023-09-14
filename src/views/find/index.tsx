@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api'
+import { listen } from '@tauri-apps/api/event'
 import { BaseDirectory, homeDir } from '@tauri-apps/api/path'
 import { metadata, readTextFile } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
@@ -7,7 +8,6 @@ import { useEffect, useState } from 'react'
 
 import DeviceList from './DeviceList'
 import type { IQueryRes } from './types'
-import { listen } from '@tauri-apps/api/event'
 
 // const { useToken } = theme
 
@@ -41,18 +41,19 @@ async function getConfig() {
 }
 
 function Find() {
-  const [devices, setDevices] = useState<IQueryRes[]>([])
+  const [onlineDevices, setOnlineDevices] = useState<IQueryRes[]>([])
+  const [offlineDevices, setOfflineDevices] = useState<IQueryRes[]>([])
 
   const items: CollapseProps['items'] = [
     {
       key: 'online',
       label: '在线设备',
-      children: <DeviceList listData={devices}/>,
+      children: <DeviceList listData={onlineDevices}/>,
     },
     {
       key: 'offline',
       label: '离线设备',
-      children: <DeviceList listData={[]}/>,
+      children: <DeviceList listData={offlineDevices}/>,
     },
   ]
 
@@ -93,7 +94,17 @@ function Find() {
   useEffect(() => {
     listen<IQueryRes[]>('service_discovery', (data) => {
       console.log('🚀 ~ file: index.tsx:81 ~ listen ~ data', data)
-      setDevices(data.payload)
+      const offline: IQueryRes[] = []
+      const online: IQueryRes[] = []
+      data.payload.forEach((item) => {
+        if (item.offline)
+          offline.push(item)
+        else
+          online.push(item)
+      })
+
+      setOfflineDevices(offline)
+      setOnlineDevices(online)
     })
   }, [])
 
