@@ -13,7 +13,7 @@ use tauri::Window;
 // use crate::utils::get_progressbar;
 
 const SERVICE_TYPE: &str = "_rope._tcp.local.";
-const PORT: u16 = 17682;
+pub const PORT: u16 = 17682;
 
 // pub fn generate_magic_string() -> String {
 //     let mut generator = Generator::default();
