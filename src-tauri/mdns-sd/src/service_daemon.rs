@@ -528,18 +528,18 @@ impl ServiceDaemon {
 
             Command::Verify(fullname, ty_domain, sender) => {
               let mut offline = true;
-              println!("++=====+++++{:?}", zc.broadcast_addr);
+              // println!("++=====+++++{:?}", zc.broadcast_addr);
               if let Some(records) = zc.cache.ptr.get(&ty_domain) {
                 for record in records.iter() {
                     if let Some(ptr) = record.any().downcast_ref::<DnsPointer>() {
-                        println!("ptr: {:?}", ptr.alias);
+                        // println!("ptr: {:?}", ptr.alias);
                         offline = false;
                         break;
                     }
                 }
               }
               let map = zc.queriers.clone();
-              println!("{:?}", map);
+              // println!("{:?}", map);
 
               call_listener(
                 &map,

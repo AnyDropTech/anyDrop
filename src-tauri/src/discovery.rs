@@ -1,5 +1,3 @@
-mod utils;
-
 use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 use std::time::Duration;
@@ -12,7 +10,7 @@ use tauri::Window;
 
 // use crate::utils::get_progressbar;
 
-const SERVICE_TYPE: &str = "_rope._tcp.local.";
+pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
 
 // pub fn generate_magic_string() -> String {
@@ -63,7 +61,7 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
     MDNS.as_ref().unwrap()
   };
 
-  let my_addrs: Vec<Ipv4Addr> = utils::my_ipv4_interfaces()
+  let my_addrs: Vec<Ipv4Addr> = crate::utils::my_ipv4_interfaces()
       .iter()
       .map(|i| i.ip)
       .collect();
@@ -144,6 +142,11 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
 
   Ok(())
 }
+
+pub fn get_instance_fullname(password: String) -> String {
+  format!("{}.{}", password, SERVICE_TYPE)
+}
+
 pub fn unregister(password: &str) {
   // let mdns = ServiceDaemon::new().expect("Could not create service daemon");
   let mdns = unsafe {
@@ -210,7 +213,7 @@ pub fn query_handler (window: Window, password: &str) {
         ServiceEvent::ServiceResolved(info) => {
           let service_info = info.clone();
           if service_info.get_type() == SERVICE_TYPE  {
-            println!("test ================== {:?}", service_info);
+            // println!("test ================== {:?}", service_info);
             let res = parse_info((
               service_info.clone().get_addresses().clone(),
               service_info.clone().get_fullname().clone().to_string(),
@@ -235,7 +238,7 @@ pub fn query_handler (window: Window, password: &str) {
           println!("Search stopped for {}", &ty);
         }
         ServiceEvent::VerifyClient(fullname, service_type, offline) => {
-          println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
+          // println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
           let mut i = 0;
           while i < result_vec.len() {
             let mut current = result_vec[i].clone();
@@ -252,15 +255,15 @@ pub fn query_handler (window: Window, password: &str) {
         }
       }
 
-      println!("info {:?}", result_vec.clone());
+      // println!("info {:?}", result_vec.clone());
       let _ = window.emit("service_discovery", result_vec.clone());
       // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
       let mut i = 0;
-      println!("result_vec.len(), {:?}", result_vec.len());
+      // println!("result_vec.len(), {:?}", result_vec.len());
       while i < result_vec.len() {
         let current = result_vec[i].clone();
         let fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
-        println!("fullname, {:?}", fullname);
+        // println!("fullname, {:?}", fullname);
         let _ = mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
         i+=1;
       }

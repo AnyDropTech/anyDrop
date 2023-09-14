@@ -1,4 +1,5 @@
-import { Empty } from 'antd'
+import { invoke } from '@tauri-apps/api'
+import { Button, Empty } from 'antd'
 import React from 'react'
 
 import type { IDevice, IQueryRes } from './types'
@@ -14,6 +15,16 @@ export interface IDevicesProps {
 export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
   const { data } = props
   console.log(data)
+
+  const handleOpen = () => {
+    invoke('select_send_file').then((res) => {
+      console.log(res)
+      const filePath = res[0]
+      invoke('send_file_client', { filePath }).then((sendRes) => {
+        console.log(sendRes)
+      })
+    })
+  }
   return (
     <div className="device-item">
       <div className="device-item__icon">
@@ -24,6 +35,7 @@ export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
         <div className="device-item-name">{data.nickname}</div>
         <div className='device-item-device_name'>{data.device_name}</div>
       </div>
+      <Button type="primary" onClick={() => handleOpen()}>选择文件</Button>
     </div>
   )
 }
