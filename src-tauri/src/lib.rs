@@ -1,14 +1,15 @@
 pub mod discovery;
 pub mod send;
 pub mod utils;
+use anyhow::{anyhow, Context};
 use local_ipaddress;
-use std::{fs::metadata, path::PathBuf};
+use std::{fs::metadata, path::{PathBuf, Path}};
 use tauri::{Runtime, Window};
 
 use rfd::FileDialog;
 
 use discovery::{query_handler, register_service, unregister, ClientDevice, PORT};
-use send::send_file;
+use send::{send_file, recv_msg};
 use tokio::sync::oneshot;
 
 use crate::send::send_msg;
@@ -81,6 +82,7 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
         [
             ("name".into(), own_file_path.into()),
             ("size".into(), file_size.to_string()),
+            ("is_file".into(), true.to_string())
         ]
         .into(),
       );
@@ -89,6 +91,41 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
 
     let a = "success".to_string();
     a
+}
+
+#[tauri::command]
+fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str) ->String {
+
+  let (addrs, port, data) = recv_msg(password)?;
+  let name = Path::new(
+      data.get_property_val_str("name")
+          .context("`name` key must be present")?,
+  )
+  .file_name()
+  .and_then(|x| x.to_str())
+  .ok_or_else(|| anyhow!("Error while read filename"))?;
+  let save_dir = "2023-09-14";
+  let path = save_dir.clone().unwrap_or_else(PathBuf::new).join(name);
+  for addr in &addrs {
+      println!("Trying {addr}");
+      if recv_file(
+          addr,
+          port,
+          &path,
+          data.get_property_val_str("size")
+              .context("`size` key must be present")?
+              .parse()?,
+      )
+      .await
+      .is_ok()
+      {
+          debug!("File is received. Breaking loop");
+          break;
+      }
+  }
+
+  let a = "success".to_string();
+  a
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -104,7 +141,8 @@ pub fn run() {
             get_user_savepath,
             unregister_service,
             send_file_client,
-            select_send_file
+            select_send_file,
+            reciver_save_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

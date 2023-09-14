@@ -9,6 +9,7 @@ export interface IDevice {
   history: string
   auto_receive: string
   receive_dir: string
+  password: string
 }
 
 export interface IQueryRes {

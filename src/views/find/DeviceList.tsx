@@ -16,15 +16,22 @@ export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
   const { data } = props
   console.log(data)
 
-  const handleOpen = () => {
+  const handleOpen = (password: string) => {
     invoke('select_send_file').then((res) => {
       console.log(res)
       const filePath = res[0]
-      invoke('send_file_client', { filePath }).then((sendRes) => {
+      invoke('send_file_client', { filePath, password }).then((sendRes) => {
         console.log(sendRes)
       })
     })
   }
+
+  const handleGetFile = (password: string, filePath: string) => {
+    invoke('reciver_save_file', { password, filePath }).then((res) => {
+      console.log(res)
+    })
+  }
+
   return (
     <div className="device-item">
       <div className="device-item__icon">
@@ -35,7 +42,8 @@ export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
         <div className="device-item-name">{data.nickname}</div>
         <div className='device-item-device_name'>{data.device_name}</div>
       </div>
-      <Button type="primary" onClick={() => handleOpen()}>选择文件</Button>
+      {props.is_file === 'true' ? <Button type="primary" onClick={() => handleGetFile(data.password, props.name)}>接收文件</Button>: <Button type="primary" onClick={() => handleOpen(data.password)}>选择文件</Button>}
+
     </div>
   )
 }

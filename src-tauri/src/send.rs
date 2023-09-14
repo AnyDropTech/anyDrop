@@ -74,7 +74,7 @@ fn set_rogress(size: u8) {
 }
 
 pub async fn send_file(port: u16, file_path: &str, size: u64, tx: oneshot::Sender<()>) -> AResult<u16> {
-    let listener = TcpListener::bind("0:0").await?;
+    let listener = TcpListener::bind("192.168.3.6:23456").await?;
 
     let addr = listener.local_addr()?;
 
@@ -100,7 +100,7 @@ pub async fn send_file(port: u16, file_path: &str, size: u64, tx: oneshot::Sende
     Ok(addr.port())
 }
 
-async fn recv_file(ip: &Ipv4Addr, port: u16, path: &PathBuf, size: u64) -> AResult<()> {
+pub async fn recv_file(ip: &Ipv4Addr, port: u16, path: &PathBuf, size: u64) -> AResult<()> {
     let addr = format!("{ip}:{port}");
     let mut stream = TcpStream::connect(addr).await?;
 
