@@ -13,6 +13,7 @@ export interface IDevice {
 
 export interface IQueryRes {
   data: IDevice
+  offline: boolean
   fullname: string
   host_name: string
   ip_addrs: string[]

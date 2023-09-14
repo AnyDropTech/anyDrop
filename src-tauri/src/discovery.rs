@@ -181,6 +181,7 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
   result.insert("host_name".to_string(), serde_json::Value::String(info.2.to_string()));
   result.insert("port".to_string(), serde_json::Value::Number(info.3.into()));
   result.insert("ip_addrs".to_string(), serde_json::Value::Array(info.0.iter().map(|i| serde_json::Value::String(i.to_string())).collect()));
+  result.insert("offline".to_string(), serde_json::Value::Bool(false));
 
   let json_value = serde_json::Value::Object(result);
 
@@ -235,6 +236,19 @@ pub fn query_handler (window: Window, password: &str) {
         }
         ServiceEvent::VerifyClient(fullname, service_type, offline) => {
           println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
+          let mut i = 0;
+          while i < result_vec.len() {
+            let mut current = result_vec[i].clone();
+            let current_fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
+            if current_fullname == fullname {
+              current["offline".to_string()] = serde_json::Value::Bool(offline);
+              result_vec[i] = current;
+              break;
+            }
+            i+=1;
+          };
+          let _ = window.emit("service_discovery", result_vec.clone());
+          continue;
         }
       }
 
