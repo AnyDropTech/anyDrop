@@ -67,6 +67,7 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "flume",
  "if-addrs",
  "local_ipaddress",
  "log",
