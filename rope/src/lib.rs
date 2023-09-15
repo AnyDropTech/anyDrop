@@ -105,7 +105,7 @@ async fn recv_file(ip: &Ipv4Addr, port: u16, path: &PathBuf, size: u64) -> AResu
     let addr = format!("{ip}:{port}");
     let mut stream = TcpStream::connect(addr).await?;
 
-    debug!("Peer is connected. Receiving file: {path:?}");
+    debug!("Peer is connected. Receiving file1111: {path:?}");
 
     let pb = get_progressbar(size);
 

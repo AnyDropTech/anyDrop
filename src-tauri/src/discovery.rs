@@ -1,5 +1,3 @@
-mod utils;
-
 use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 use std::time::Duration;
@@ -55,11 +53,11 @@ impl ClientDevice {
 
 pub fn register_service(data: ClientDevice) -> AResult<()> {
   let mdns = ServiceDaemon::new().expect("Could not create service daemon");
-  let my_addrs: Vec<Ipv4Addr> = utils::my_ipv4_interfaces()
+  let my_addrs: Vec<Ipv4Addr> = crate::utils::my_ipv4_interfaces()
       .iter()
       .map(|i| i.ip)
       .collect();
-  println!("Collected addresses: {my_addrs:?}");
+  // println!("Collected addresses: {my_addrs:?}");
 
   let password = &data.password.clone();
 
@@ -95,7 +93,7 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
       .unwrap();
 
   // Print the resulting HashMap
-  println!("{:?}", data_hash_map);
+  // println!("{:?}", data_hash_map);
 
 
   let service_info = ServiceInfo::new(
@@ -107,14 +105,13 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
     Some(data_hash_map),
   )?;
 
-  println!("Service registered: {password}.{SERVICE_TYPE}");
+  // println!("Service registered: {password}.{SERVICE_TYPE}");
 
   let monitor = mdns.monitor().expect("Failed to monitor the daemon");
-  let service_fullname = service_info.get_fullname().to_string();
   mdns.register(service_info)
       .expect("Failed to register mDNS service");
 
-  println!("Registered service {}.{}.{}", &instance_name, &SERVICE_TYPE, service_fullname);
+  // println!("Registered service {}.{}.{}", &instance_name, &SERVICE_TYPE, service_fullname);
 
   // std::thread::spawn(move || {
   //   let wait_in_secs = 20;
@@ -156,7 +153,7 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
     let key = ppr.key();
     // let val = ppr.val().unwrap().to_owned().clone().unwrap();
     // let vv = &val;
-    println!("ppr, {:?}, {:?}", ppr, key);
+    // println!("ppr, {:?}, {:?}", ppr, key);
     // println!("ppr, {:?}, {:?}, {:?}, {:?}, {:?}", ppr, key, &val, vv, ppr.val());
     data.insert(key.to_owned(), serde_json::Value::String(ppr.val_str().to_string()));
   }
@@ -195,8 +192,9 @@ pub fn query_handler (window: Window, password: &str) {
         }
         ServiceEvent::ServiceResolved(info) => {
           let service_info = info.clone();
+          println!("test ================== {:?}", service_info);
           if service_info.get_type() == SERVICE_TYPE  {
-            println!("test ================== {:?}", service_info);
+            // println!("test ================== {:?}", service_info);
             let res = parse_info((
               service_info.clone().get_addresses().clone(),
               service_info.clone().get_fullname().clone().to_string(),
@@ -221,7 +219,7 @@ pub fn query_handler (window: Window, password: &str) {
           println!("Search stopped for {}", &ty);
         }
         ServiceEvent::VerifyClient(fullname, service_type, offline) => {
-          println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
+          // println!("========================verify: {:?}-{:?}-{:?}", fullname, service_type, offline);
           let mut i = 0;
           while i < result_vec.len() {
             let mut current = result_vec[i].clone();

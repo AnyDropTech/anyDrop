@@ -1,6 +1,7 @@
 pub mod discovery;
 pub mod send;
 pub mod utils;
+
 use anyhow::{anyhow, Context};
 use local_ipaddress;
 use std::{fs::metadata, path::{PathBuf, Path}};
@@ -64,14 +65,16 @@ fn get_locale_ip() -> String {
 }
 
 #[tauri::command]
-fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str) -> String {
+fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str, receive_dir: &str) -> String {
     let (tx, rx) = oneshot::channel();
 
     let file_size = metadata(file_path).unwrap().len();
     println!("file_size: {:?}", file_size);
+    println!("password: {:?}", password);
 
     let own_file_path = file_path.to_owned();
     let own_password = password.to_owned();
+    let own_receive_dir = receive_dir.to_owned();
 
     tokio::spawn(async move {
       let port = send_file(PORT, &own_file_path, file_size, tx).await;
@@ -83,7 +86,8 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
             ("name".into(), own_file_path.into()),
             ("size".into(), file_size.to_string()),
             ("is_file".into(), true.to_string()),
-            ("password".into(), own_password.to_string())
+            ("password".into(), own_password.to_string()),
+            ("receive_dir".into(), own_receive_dir.to_string())
         ]
         .into(),
       );
@@ -95,9 +99,10 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
 }
 
 #[tauri::command]
-fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str) ->String {
+fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str, receive_dir: &str) ->String {
 
   let own_password = password.to_owned();
+  let own_receive_dir = receive_dir.to_owned();
   tokio::spawn(async move {
     let (addrs, port, data) = recv_msg(&own_password).unwrap();
     println!("addrs, {:?}", addrs);
@@ -110,14 +115,19 @@ fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, pass
     .file_name()
     .and_then(|x| x.to_str())
     .ok_or_else(|| anyhow!("Error while read filename"));
-    let save_dir: Option<PathBuf> = PathBuf::from("2023-09-14".to_string()).parent().map(|x| x.to_owned());
-    let path = save_dir.clone().unwrap_or_else(PathBuf::new).join(name.unwrap());
+    let all_dir = format!("{own_receive_dir}/2023-09-14");
+    let save_dir: Option<PathBuf> = Some(PathBuf::from(all_dir.to_string()));
+    println!("====={:?}", save_dir);
+    // let path = save_dir.clone().unwrap_or_else(PathBuf::new).join(name.unwrap());
+    let file_path = save_dir.unwrap().join(name.unwrap());
+    println!("====={:?}", file_path);
     for addr in &addrs {
         println!("Trying {addr}");
         if recv_file(
             addr,
             port,
-            &path,
+            &all_dir,
+            &file_path,
             data.get_property_val_str("size")
                 .context("`size` key must be present").unwrap().parse().unwrap()
         )
