@@ -12,7 +12,7 @@ use discovery::{query_handler, register_service, unregister, ClientDevice, PORT}
 use send::{send_file, recv_msg};
 use tokio::sync::oneshot;
 
-use crate::send::send_msg;
+use crate::send::{send_msg, recv_file};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -82,7 +82,8 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
         [
             ("name".into(), own_file_path.into()),
             ("size".into(), file_size.to_string()),
-            ("is_file".into(), true.to_string())
+            ("is_file".into(), true.to_string()),
+            ("password".into(), own_password.to_string())
         ]
         .into(),
       );
@@ -96,33 +97,38 @@ fn send_file_client<R: Runtime>(window: tauri::Window<R>, file_path: &str, passw
 #[tauri::command]
 fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, password: &str) ->String {
 
-  let (addrs, port, data) = recv_msg(password)?;
-  let name = Path::new(
-      data.get_property_val_str("name")
-          .context("`name` key must be present")?,
-  )
-  .file_name()
-  .and_then(|x| x.to_str())
-  .ok_or_else(|| anyhow!("Error while read filename"))?;
-  let save_dir = "2023-09-14";
-  let path = save_dir.clone().unwrap_or_else(PathBuf::new).join(name);
-  for addr in &addrs {
-      println!("Trying {addr}");
-      if recv_file(
-          addr,
-          port,
-          &path,
-          data.get_property_val_str("size")
-              .context("`size` key must be present")?
-              .parse()?,
-      )
-      .await
-      .is_ok()
-      {
-          debug!("File is received. Breaking loop");
-          break;
-      }
-  }
+  let own_password = password.to_owned();
+  tokio::spawn(async move {
+    let (addrs, port, data) = recv_msg(&own_password).unwrap();
+    println!("addrs, {:?}", addrs);
+    println!("port, {:?}", port);
+    println!("data, {:?}", data);
+    let name = Path::new(
+        data.get_property_val_str("name")
+            .context("`name` key must be present").unwrap(),
+    )
+    .file_name()
+    .and_then(|x| x.to_str())
+    .ok_or_else(|| anyhow!("Error while read filename"));
+    let save_dir: Option<PathBuf> = PathBuf::from("2023-09-14".to_string()).parent().map(|x| x.to_owned());
+    let path = save_dir.clone().unwrap_or_else(PathBuf::new).join(name.unwrap());
+    for addr in &addrs {
+        println!("Trying {addr}");
+        if recv_file(
+            addr,
+            port,
+            &path,
+            data.get_property_val_str("size")
+                .context("`size` key must be present").unwrap().parse().unwrap()
+        )
+        .await
+        .is_ok()
+        {
+            println!("File is received. Breaking loop");
+            break;
+        }
+    }
+  });
 
   let a = "success".to_string();
   a

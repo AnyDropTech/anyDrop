@@ -42,7 +42,7 @@ export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
         <div className="device-item-name">{data.nickname}</div>
         <div className='device-item-device_name'>{data.device_name}</div>
       </div>
-      {props.is_file === 'true' ? <Button type="primary" onClick={() => handleGetFile(data.password, props.name)}>接收文件</Button>: <Button type="primary" onClick={() => handleOpen(data.password)}>选择文件</Button>}
+      {data.is_file === 'true' ? <Button type="primary" onClick={() => handleGetFile(data.password, data.name)}>接收文件</Button>: <Button type="primary" onClick={() => handleOpen(data.password)}>选择文件</Button>}
 
     </div>
   )

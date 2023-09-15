@@ -16,7 +16,7 @@ pub use anyhow::Result as AResult;
 use tracing::debug;
 
 
-const SERVICE_TYPE: &str = "_rope._tcp.local.";
+pub const SERVICE_TYPE: &str = "_rope_file._tcp.local.";
 
 fn generate_magic_string() -> String {
     let mut generator = Generator::default();
@@ -108,9 +108,9 @@ pub async fn recv_file(ip: &Ipv4Addr, port: u16, path: &PathBuf, size: u64) -> A
 
     // let pb = get_progressbar(size);
 
-    let f = File::create(path).await?;
+    let mut f = File::create(path).await?;
 
-    // tokio::io::copy(&mut stream, &mut pb.wrap_async_write(f)).await?;
+    tokio::io::copy(&mut stream, &mut f).await?;
 
     debug!("Done");
 
