@@ -4,19 +4,16 @@ pub mod utils;
 
 use anyhow::{anyhow, Context};
 use local_ipaddress;
-use mdns_sd::ServiceDaemon;
-use std::{fs::metadata, path::{PathBuf, Path}, sync::Arc};
-use tauri::{Runtime, Window, State};
+use std::{fs::metadata, path::{PathBuf, Path}};
+use tauri::{Runtime, Window};
 
 use rfd::FileDialog;
-
-use tokio::sync::Mutex;
 
 use discovery::{query_handler, register_service, unregister, ClientDevice, PORT};
 use send::{send_file, recv_msg};
 use tokio::sync::oneshot;
 
-use crate::send::{send_msg, recv_file};
+use crate::send::{send_msg, recv_file, unregister_file_service};
 
 #[tauri::command]
 fn start_discovery_command() {
@@ -67,15 +64,8 @@ fn get_locale_ip() -> String {
     format!("{}", ip)
 }
 
-#[warn(dead_code)]
-struct SenderCtrl {
-  pub sender_mdns: Arc<Mutex<Option<ServiceDaemon>>>
-}
-
-struct Note(Mutex<SenderCtrl>);
-
 #[tauri::command]
-fn send_file_client(note: State<Note>, file_path: &str, password: &str, receive_dir: &str) -> String {
+fn send_file_client(file_path: &str, password: &str, receive_dir: &str) -> String {
     let (tx, rx) = oneshot::channel();
 
     let file_size = metadata(file_path).unwrap().len();
@@ -83,12 +73,9 @@ fn send_file_client(note: State<Note>, file_path: &str, password: &str, receive_
     let own_file_path = file_path.to_owned();
     let own_password = password.to_owned();
     let own_receive_dir = receive_dir.to_owned();
-    let own_note = note.to_owned();
 
     tokio::spawn(async move {
       let port = send_file(PORT, &own_file_path, file_size, tx).await;
-      let mut sender_ctrl = own_note.0.lock().await;
-      let mut sender_mdns = sender_ctrl.sender_mdns.lock().await.unwrap();
       println!("listener port{:?}", port);
       let mds = send_msg(
         &own_password,
@@ -104,7 +91,6 @@ fn send_file_client(note: State<Note>, file_path: &str, password: &str, receive_
       );
       // my_state.sender_mdns = mds.unwrap();
     // let mut sender_mdns = sender_ctrl.sender_mdns.lock().unwrap();
-      sender_mdns = mds.unwrap();
       rx.await
     });
 
@@ -146,6 +132,7 @@ fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, pass
         .is_ok()
         {
             println!("File is received. Breaking loop");
+            unregister_file_service(&own_password);
             break;
         }
     }
@@ -157,16 +144,10 @@ fn reciver_save_file<R: Runtime>(window: tauri::Window<R>, file_path: &str, pass
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let sender_mdns = Arc::new(Mutex::<Option<ServiceDaemon>>::new(None.unwrap()));
-    let state = SenderCtrl {
-      sender_mdns: sender_mdns.clone()
-    };
-    let note = Note(Mutex::new(state));
     // let m = Mutex::new(state);
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
-        .manage(note)
         .invoke_handler(tauri::generate_handler![
             get_locale_ip,
             start_broadcast_command,

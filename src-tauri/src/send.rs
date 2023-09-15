@@ -14,8 +14,16 @@ pub use anyhow::Result as AResult;
 
 use crate::discovery::SERVICE_TYPE;
 
-pub fn send_msg(magic_string: &str, port: u16, data: HashMap<String, String>) -> AResult<ServiceDaemon> {
-    let mdns = ServiceDaemon::new()?;
+pub static mut MDNS: Option<ServiceDaemon> = None;
+
+pub fn send_msg(magic_string: &str, port: u16, data: HashMap<String, String>) -> AResult<()> {
+    // let mdns = ServiceDaemon::new()?;
+    let mdns = unsafe {
+      if MDNS.is_none() {
+          MDNS = Some(ServiceDaemon::new().expect("Could not create service daemon"));
+      }
+      MDNS.as_ref().unwrap()
+    };
     let my_addrs: Vec<Ipv4Addr> = crate::utils::my_ipv4_interfaces()
         .iter()
         .map(|i| i.ip)
@@ -34,8 +42,21 @@ pub fn send_msg(magic_string: &str, port: u16, data: HashMap<String, String>) ->
 
     mdns.register(service_info).expect("register failed");
 
-    Ok(mdns)
+    Ok(())
 }
+
+pub fn unregister_file_service(password: &str) {
+  let mdns = unsafe {
+    MDNS.as_ref().unwrap()
+  };
+  let fullname = format!("{}.{}", password, SERVICE_TYPE);
+  println!("Unregistering service {}", &fullname);
+  let receiver = mdns.unregister(&fullname).unwrap();
+  while let Ok(event) = receiver.recv() {
+    println!("unregister result: {:?}", &event);
+  }
+}
+
 
 pub fn recv_msg(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtProperties)> {
     let mdns = ServiceDaemon::new()?;
@@ -59,7 +80,7 @@ pub fn recv_msg(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtPrope
 }
 
 pub async fn send_file(port: u16, file_path: &str, size: u64, tx: oneshot::Sender<()>) -> AResult<u16> {
-    let listener =TcpListener::bind("0:0").await?;
+    let listener = TcpListener::bind("0.0.0.0:0").await?;
 
     let addr = listener.local_addr()?;
 

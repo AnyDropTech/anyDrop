@@ -8,23 +8,8 @@ use mdns_sd::{ServiceDaemon, ServiceInfo, ServiceEvent, TxtProperties};
 pub use anyhow::Result as AResult;
 use tauri::Window;
 
-// use crate::utils::get_progressbar;
-
 pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
-
-// pub fn generate_magic_string() -> String {
-//     let mut generator = Generator::default();
-//     generator.next().unwrap()
-// }
-
-// pub enum Platfrom {
-//   IOS,
-//   ANDROID,
-//   MAC,
-//   WINDOWS,
-//   LINUX,
-// }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ClientDevice {
@@ -50,9 +35,16 @@ impl ClientDevice {
   //     map
   // }
 }
-
+static mut MDNS: Option<ServiceDaemon> = None;
 pub fn register_service(data: ClientDevice) -> AResult<()> {
-  let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  // let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  // 获取或初始化 mdns 变量
+  let mdns = unsafe {
+    if MDNS.is_none() {
+        MDNS = Some(ServiceDaemon::new().expect("Could not create service daemon"));
+    }
+    MDNS.as_ref().unwrap()
+  };
   let my_addrs: Vec<Ipv4Addr> = crate::utils::my_ipv4_interfaces()
       .iter()
       .map(|i| i.ip)
@@ -134,17 +126,22 @@ pub fn register_service(data: ClientDevice) -> AResult<()> {
   Ok(())
 }
 pub fn unregister(password: &str) {
-  let mdns = ServiceDaemon::new().expect("Could not create service daemon");
+  let mdns = unsafe {
+    MDNS.as_ref().unwrap()
+  };
   let fullname = format!("{}.{}", password, SERVICE_TYPE);
   println!("Unregistering service {}", &fullname);
-  mdns.unregister(&fullname).expect("Failed to unregister mDNS service");
+  let receiver = mdns.unregister(&fullname).unwrap();
+  while let Ok(event) = receiver.recv() {
+    println!("unregister result: {:?}", &event);
+  }
 }
 
 fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> serde_json::Value {
   let info = res.clone();
 
   let pr = info.4.iter();
-  println!("res, {:?}", info.4);
+  // println!("res, {:?}", info.4);
 
   let mut data = serde_json::Map::new();
 
@@ -177,7 +174,7 @@ pub fn query_handler (window: Window, password: &str) {
 
   let receiver = mdns.browse(&SERVICE_TYPE).unwrap();
 
-  let fullname = format!("{}.{}", password, SERVICE_TYPE);
+  // let fullname = format!("{}.{}", password, SERVICE_TYPE);
 
   let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
 
@@ -236,15 +233,15 @@ pub fn query_handler (window: Window, password: &str) {
         }
       }
 
-      println!("info {:?}", result_vec.clone());
+      // println!("info {:?}", result_vec.clone());
       let _ = window.emit("service_discovery", result_vec.clone());
       // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
       let mut i = 0;
-      println!("result_vec.len(), {:?}", result_vec.len());
+      // println!("result_vec.len(), {:?}", result_vec.len());
       while i < result_vec.len() {
         let current = result_vec[i].clone();
         let fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
-        println!("fullname, {:?}", fullname);
+        // println!("fullname, {:?}", fullname);
         let _ = mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
         i+=1;
       }
