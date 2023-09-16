@@ -67,7 +67,9 @@ pub fn recv_msg(magic_string: &str) -> AResult<(HashSet<Ipv4Addr>, u16, TxtPrope
 
     loop {
         if let ServiceEvent::ServiceResolved(info) = receiver.recv()? {
-            if info.get_fullname() == expected_fullname {
+            let name = info.get_properties().get("name");
+            println!("======================{:?}", name);
+            if info.get_fullname() == expected_fullname && !name.is_none() {
                 println!("Matched service: {info:?}");
                 return Ok((
                     info.get_addresses().clone(),

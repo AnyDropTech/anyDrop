@@ -211,6 +211,18 @@ pub fn query_handler (window: Window, password: &str) {
         }
         ServiceEvent::ServiceRemoved(service_type, service_fullname) => {
           println!("========================removed: {:?}-{:?}", service_type, service_fullname);
+          let mut i = 0;
+          while i < result_vec.len() {
+            let current = result_vec[i].clone();
+            let current_fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
+            let current_name = current.get("data").unwrap().get("name");
+            println!("+++==================================={current_name:?}");
+            if current_fullname == service_fullname && service_type == SERVICE_TYPE && !current_name.is_none() {
+              result_vec.remove(i);
+              break;
+            }
+            i+=1;
+          };
         }
         ServiceEvent::SearchStopped(ty) => {
           println!("Search stopped for {}", &ty);
