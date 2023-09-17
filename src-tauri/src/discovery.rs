@@ -22,19 +22,6 @@ pub struct ClientDevice {
   history: bool
 }
 
-impl ClientDevice {
-  // fn to_hashmap(&self) -> HashMap<String, String> {
-  //     let mut map = HashMap::new();
-  //     map.insert("nickname".to_string(), self.nickname.to_string().clone());
-  //     map.insert("device_name".to_string(), self.device_name.to_string().clone());
-  //     map.insert("password".to_string(), self.password.to_string().clone());
-  //     map.insert("receive".to_string(), self.receive.to_string().clone());
-  //     map.insert("auto_receive".to_string(), self.auto_receive.to_string().clone());
-  //     map.insert("receive_dir".to_string(), self.receive_dir.to_string().clone());
-  //     map.insert("history".to_string(), self.history.to_string().clone());
-  //     map
-  // }
-}
 static mut MDNS: Option<ServiceDaemon> = None;
 pub fn register_service(data: ClientDevice) -> AResult<()> {
   // let mdns = ServiceDaemon::new().expect("Could not create service daemon");
@@ -146,12 +133,7 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
   let mut data = serde_json::Map::new();
 
   for ppr in  pr {
-    // let key = ppr.val_str();
     let key = ppr.key();
-    // let val = ppr.val().unwrap().to_owned().clone().unwrap();
-    // let vv = &val;
-    // println!("ppr, {:?}, {:?}", ppr, key);
-    // println!("ppr, {:?}, {:?}, {:?}, {:?}, {:?}", ppr, key, &val, vv, ppr.val());
     data.insert(key.to_owned(), serde_json::Value::String(ppr.val_str().to_string()));
   }
 

@@ -1,4 +1,5 @@
 use if_addrs::{IfAddr, Ifv4Addr};
+use names::Generator;
 
 // use tauri::{Runtime, Manager};
 
@@ -28,4 +29,9 @@ pub fn my_ipv4_interfaces() -> Vec<Ifv4Addr> {
         }
     })
     .collect()
+}
+
+pub fn generate_magic_string() -> String {
+  let mut generator = Generator::default();
+  generator.next().unwrap()
 }

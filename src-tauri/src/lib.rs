@@ -2,10 +2,16 @@ pub mod discovery;
 pub mod send;
 pub mod utils;
 
+pub mod error;
+pub mod client_config;
+pub mod client_connector;
+pub mod global;
+
 use anyhow::{anyhow, Context};
+use global::set_app_handle;
 use local_ipaddress;
 use std::{fs::metadata, path::{PathBuf, Path}};
-use tauri::{Runtime, Window};
+use tauri::{Runtime, Window, Manager};
 
 use rfd::FileDialog;
 
@@ -148,6 +154,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
+        .setup(|app| {
+          set_app_handle(app.handle().clone());
+          Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_locale_ip,
             start_broadcast_command,
