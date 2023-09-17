@@ -1,17 +1,14 @@
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ClientCommand {
+#[tauri::command]
+pub fn start_disconvery() {}
 
-}
+#[tauri::command]
+fn stop_discovery() {}
 
-impl ClientCommand {
+#[tauri::command]
+fn select_send_files() {}
 
-  fn start_disconvery() {}
+#[tauri::command]
+fn receiver_files() {}
 
-  fn stop_discovery() {}
-
-  fn select_send_files() {}
-
-  fn receiver_files() {}
-
-  fn send_files() {}
-}
+#[tauri::command]
+fn send_files() {}
