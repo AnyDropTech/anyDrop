@@ -17,28 +17,35 @@ function DefaultLayout() {
   const sidebarItems = [
     {
       key: '1',
-      label: '首页',
-    },
-    {
-      key: '2',
       label: '发现',
     },
     {
+      key: '2',
+      label: '发送',
+    },
+    {
       key: '3',
-      label: '传输',
+      label: '接收',
+    },
+    {
+      key: '4',
+      label: '设置',
     },
   ]
 
   function handleMenuClick({ key }: any) {
     switch (key) {
       case '1':
-        navigateTo('/')
-        break
-      case '2':
         navigateTo('/find')
         break
+      case '2':
+        navigateTo('/send')
+        break
       case '3':
-        navigateTo('/transfer')
+        navigateTo('/reciver')
+        break
+      case '4':
+        navigateTo('/setting')
         break
       default:
         break
