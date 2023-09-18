@@ -1,5 +1,4 @@
 //! Service daemon for client config.
-//!
 use std::fs::{metadata, self};
 
 use tauri::{path::BaseDirectory, Manager};

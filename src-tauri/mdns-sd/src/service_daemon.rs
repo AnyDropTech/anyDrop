@@ -526,12 +526,12 @@ impl ServiceDaemon {
                 zc.process_set_option(daemon_opt);
             }
 
-            Command::Verify(fullname, ty_domain, sender) => {
+            Command::Verify(fullname, ty_domain, _sender) => {
               let mut offline = true;
               // println!("++=====+++++{:?}", zc.broadcast_addr);
               if let Some(records) = zc.cache.ptr.get(&ty_domain) {
                 for record in records.iter() {
-                    if let Some(ptr) = record.any().downcast_ref::<DnsPointer>() {
+                    if let Some(_ptr) = record.any().downcast_ref::<DnsPointer>() {
                         // println!("ptr: {:?}", ptr.alias);
                         offline = false;
                         break;
