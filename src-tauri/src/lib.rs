@@ -28,9 +28,9 @@ fn start_discovery_command() {
 
 #[tauri::command]
 fn get_user_savepath() -> String {
-    let folder = FileDialog::new().pick_folder();
-    let folder = folder.unwrap_or_default();
-    String::from(folder.to_str().unwrap_or_default())
+  let folder = FileDialog::new().pick_folder();
+  let folder = folder.unwrap_or_default();
+  String::from(folder.to_str().unwrap_or_default())
 }
 
 #[tauri::command]

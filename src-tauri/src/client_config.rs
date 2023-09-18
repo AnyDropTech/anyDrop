@@ -1,13 +1,16 @@
 //! Service daemon for client config.
-//!
 use std::fs::{metadata, self};
 
+use rfd::FileDialog;
 use tauri::{path::BaseDirectory, Manager};
 use crate::{error::Result, global::get_app_handle};
 
 pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
 
+/**
+ * 客户端配置
+ */
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ClientConfig {
   id: String,
@@ -21,6 +24,9 @@ pub struct ClientConfig {
 }
 
 impl ClientConfig {
+  /**
+   * 创建一个新的客户端配置
+   */
   pub fn new() -> Result<Self> {
     let uni_id = crate::utils::generate_magic_string();
     Ok(Self {
@@ -35,6 +41,9 @@ impl ClientConfig {
     })
   }
 
+  /**
+   * 文件系统获取客户端配置
+   */
   pub fn get_config_from_fs() -> ClientConfig {
     // 从文件系统中读取配置 "anydrop.config.conf"
     let config_path = get_app_handle().path().resolve("anydrop.config.conf", BaseDirectory::Download).unwrap().clone();
@@ -50,4 +59,14 @@ impl ClientConfig {
 
     config
   }
+}
+
+/**
+ * 选择文件保存路径
+ */
+#[tauri::command]
+pub fn select_file_save_path() -> String {
+  let folder = FileDialog::new().pick_folder();
+  let folder = folder.unwrap_or_default();
+  String::from(folder.to_str().unwrap_or_default())
 }

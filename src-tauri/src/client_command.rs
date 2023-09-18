@@ -2,6 +2,9 @@
 pub fn start_disconvery() {}
 
 #[tauri::command]
+pub fn start_disconvery() {}
+
+#[tauri::command]
 fn stop_discovery() {}
 
 #[tauri::command]
