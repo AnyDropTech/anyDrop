@@ -15,10 +15,10 @@ function App() {
         <Routes>
           {/* 布局组件 */}
           <Route path="/" element={<DefaultLayout />}>
-            {/* Home */}
-            <Route index element={<Home />} />
             {/* 发现 */}
-            <Route path="find" element={<Find />} />
+            <Route index path="find" element={<Find />} />
+            {/* Home */}
+            <Route path='setting' element={<Home />} />
             {/* 传输 */}
             <Route path="transfer" element={<Transfer />} />
           </Route>

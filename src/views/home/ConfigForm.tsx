@@ -6,20 +6,10 @@ import type { FormInstance } from 'antd'
 import { Button, Card, Form, Input, Space, Switch } from 'antd'
 import React, { useCallback, useEffect } from 'react'
 
-import { randomNum, uuid } from '../../utils'
+import type { IDeviceConfig } from '../../types'
+import { randomNum } from '../../utils'
 
-interface FormData {
-  ip: string
-  nickname: string
-  device_name: string
-  password: string
-  receive: boolean
-  auto_receive: boolean
-  receive_dir: string
-  history: boolean
-}
-
-async function saveConfig(config: FormData) {
+async function saveConfig(config: IDeviceConfig) {
   await writeTextFile('anydrop.config.conf', JSON.stringify(config), { dir: BaseDirectory.Home })
   readTextFile('anydrop.config.conf', { dir: BaseDirectory.Home }).then((res) => {
     console.log(res)
@@ -39,7 +29,7 @@ async function checkConfig() {
 }
 
 function ConfigForm() {
-  const [form] = Form.useForm<FormData>()
+  const [form] = Form.useForm<IDeviceConfig>()
   const formRef = React.useRef<FormInstance>(null)
 
   const getLocaleIp = useCallback(async () => {
@@ -62,32 +52,28 @@ function ConfigForm() {
       else {
         const hostName = await hostname()
 
-        const password = uuid()
         const nickname = `AnyDrop_${randomNum(4).toString()}`
         const dirName = await downloadDir()
         const _platform = await platform()
-        form.setFieldsValue({ ip, device_name: hostName || '', password, nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, auto_receive: true, receive: true, history: true })
+        form.setFieldsValue({ ip, device_name: hostName || '', nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, history: true })
       }
     }
     else {
       const hostName = await hostname()
 
-      const password = uuid()
       const nickname = `AnyDrop_${randomNum(4).toString()}`
-      // const dirName = await createDir('AnyDropFiles', { dir: BaseDirectory.Download })
       const dirName = await downloadDir()
       const _platform = await platform()
-      form.setFieldsValue({ ip, device_name: hostName || '', password, nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, auto_receive: true, receive: true, history: true })
+      form.setFieldsValue({ ip, device_name: hostName || '', nickname, receive_dir: `${dirName}${_platform === 'windows' ? '\\' : '/'}AnyDropFiles`, history: true })
     }
 
     if (!checkRef) {
       const config = form.getFieldsValue()
-      console.log('🚀 ~ file: ConfigForm.tsx:85 ~ getLocaleIp ~ config:', config)
       await saveConfig(config)
     }
   }, [])
 
-  const handleFormFinish = (values: FormData) => {
+  const handleFormFinish = (values: IDeviceConfig) => {
     saveConfig(values)
   }
 
@@ -115,49 +101,30 @@ function ConfigForm() {
         onFinish={handleFormFinish}
         ref={formRef}
       >
-        <Form.Item<FormData>
+        <Form.Item<IDeviceConfig>
           label="本机IP"
           name="ip"
         >
           <Input readOnly />
         </Form.Item>
-        <Form.Item<FormData>
+        <Form.Item<IDeviceConfig>
           label="你的昵称"
           name="nickname"
         >
           <Input readOnly />
         </Form.Item>
-        <Form.Item<FormData>
+        <Form.Item<IDeviceConfig>
           label="设备名称"
           name="device_name"
         >
           <Input readOnly />
         </Form.Item>
-        <Form.Item<FormData>
-          label="本机传输密码"
-          name="password"
-        >
-          <Input readOnly />
-        </Form.Item>
-        <Form.Item<FormData>
-          label="本机可被发现"
-          name="receive"
-          valuePropName="checked"
-        >
-          <Switch checkedChildren="开启" unCheckedChildren="关闭" />
-        </Form.Item>
-        <Form.Item<FormData>
-          label="自动接收"
-          name="auto_receive"
-          valuePropName="checked"
-        >
-          <Switch checkedChildren="开启" unCheckedChildren="关闭" />
-        </Form.Item>
-        <Form.Item<FormData>
+
+        <Form.Item<IDeviceConfig>
           label="保存位置"
         >
           <Space.Compact block style={{ width: '100%' }}>
-            <Form.Item<FormData>
+            <Form.Item<IDeviceConfig>
               name="receive_dir"
             >
               <Input readOnly />
@@ -165,7 +132,7 @@ function ConfigForm() {
             <Button type="primary" onClick={handleSelectPath}>选择</Button>
           </Space.Compact>
         </Form.Item>
-        <Form.Item<FormData>
+        <Form.Item<IDeviceConfig>
           label="历史记录"
           name="history"
           valuePropName="checked"
