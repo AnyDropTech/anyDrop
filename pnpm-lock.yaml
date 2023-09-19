@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -38,6 +38,9 @@ dependencies:
   react-router-dom:
     specifier: ^6.15.0
     version: 6.15.0(react-dom@18.2.0)(react@18.2.0)
+  throttle-debounce:
+    specifier: ^5.0.0
+    version: 5.0.0
 
 devDependencies:
   '@cavin-huang/eslint-config':
@@ -61,6 +64,9 @@ devDependencies:
   '@types/react-dom':
     specifier: ^18.2.7
     version: 18.2.7
+  '@types/throttle-debounce':
+    specifier: ^5.0.0
+    version: 5.0.0
   '@vitejs/plugin-react-swc':
     specifier: ^3.3.2
     version: 3.3.2(vite@4.4.5)
@@ -1193,6 +1199,10 @@ packages:
 
   /@types/semver@7.5.1:
     resolution: {integrity: sha512-cJRQXpObxfNKkFAZbJl2yjWtJCqELQIdShsogr1d2MilP8dKD9TE/nEKHkJgUNHdGKCQaf9HbIynuV2csLGVLg==}
+    dev: true
+
+  /@types/throttle-debounce@5.0.0:
+    resolution: {integrity: sha512-Pb7k35iCGFcGPECoNE4DYp3Oyf2xcTd3FbFQxXUI9hEYKUl6YX+KLf7HrBmgVcD05nl50LIH6i+80js4iYmWbw==}
     dev: true
 
   /@types/unist@2.0.8:

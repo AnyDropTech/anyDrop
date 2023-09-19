@@ -17,11 +17,14 @@
     .main-logo {
       height: 80px;
       line-height: 80px;
-      font-size: bold;
       text-align: center;
-      font-size: 32px;
+      font-size: 20px;
       font-family: Georgia, 'Times New Roman', Times, serif;
+      font-weight:900;
       background-color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .sidebar-menu {

@@ -1,8 +1,11 @@
+import * as tauriEvent from '@tauri-apps/api/event'
+import * as tauriPath from '@tauri-apps/api/path'
 import type { CollapseProps } from 'antd'
 import { Collapse } from 'antd'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
+import { throttle } from 'throttle-debounce'
 
-import { ClearIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
+import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 
 import DeviceList from './DeviceList'
 import type { IQueryRes } from './types'
@@ -43,8 +46,66 @@ function Find() {
 
   const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
 
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [currentFiles, setCurrentFiles] = useState<Array<{ name: string }>>([])
+
   useEffect(() => {
-  }, [])
+    tauriEvent.listen('tauri://file-drop', throttle(200, (data) => {
+      console.log('drop', data)
+    }))
+    tauriEvent.listen('tauri://file-drop-hover', throttle(200, async (data) => {
+      console.log('hover', data)
+      const files = data.payload
+      if (!files.length)
+        return
+
+      const currentFiles: Array<{ name: string }> = []
+      for (const file of files) {
+        const name = await tauriPath.basename(file)
+        currentFiles.push({
+          name,
+        })
+      }
+      setCurrentFiles(currentFiles)
+      setIsDragOver(true)
+    }))
+    tauriEvent.listen('tauri://file-drop-cancelled', throttle(200, (data) => {
+      console.log('hover-cancel', data)
+      setIsDragOver(false)
+      setCurrentFiles([])
+    }))
+
+    return () => {
+    }
+  }, [setIsDragOver, setCurrentFiles])
+
+  const DropUi = memo(() => {
+    return (
+      <>
+        <SenderIcon />
+        <div className="drag-content">
+          <p className="ant-upload-text">拖拽或者粘贴文件/文件夹到这里</p>
+          <p className="ant-upload-hint">
+            支持单个文件/多个文件/文件夹
+          </p>
+        </div>
+      </>
+    )
+  })
+
+  const DropOverUi = memo(() => {
+    const fileName = currentFiles.length ? currentFiles[0].name : ''
+    const fileLength = currentFiles.length - 1
+    const tips = fileLength > 0 ? `等${fileLength}个文件` : ''
+    return (
+      <>
+        <DownIcon />
+        <div className="drag-content">
+          <p className="ant-upload-text">添加{fileName}{tips}</p>
+        </div>
+      </>
+    )
+  })
 
   return (
     <div className="page-home">
@@ -64,14 +125,12 @@ function Find() {
             <ClearIcon />
           </li>
         </ul>
-        <div className="drag-container" onMouseEnter={handleDragMouseOver} onMouseLeave={handleDragMouseLeave}>
-          <SenderIcon />
-          <div className="drag-content">
-            <p className="ant-upload-text">拖拽或者粘贴文件/文件夹到这里</p>
-            <p className="ant-upload-hint">
-              支持单个文件/多个文件/文件夹
-            </p>
-          </div>
+        <div
+          className={['drag-container', isDragOver ? 'drag-over' : ''].join(' ')}
+          onMouseEnter={handleDragMouseOver}
+          onMouseLeave={handleDragMouseLeave}
+        >
+          {isDragOver ? <DropOverUi /> : <DropUi />}
         </div>
         <List />
       </div>

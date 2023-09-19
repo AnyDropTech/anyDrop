@@ -1,5 +1,7 @@
 export * from './clear'
+export * from './down'
 export * from './file'
 export * from './floder'
+export * from './logo'
 export * from './paste'
 export * from './sender'

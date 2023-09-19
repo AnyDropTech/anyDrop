@@ -59,7 +59,9 @@ function DefaultLayout() {
       <div className="main-container">
         {/* 侧边栏 */}
         <div className="main-sidebar">
-          <div className='main-logo' style={{ background: token.colorBgContainer, color: token.colorPrimaryActive }}>AnyDrop</div>
+          <div className='main-logo' style={{ background: token.colorBgContainer, color: token.colorPrimaryActive }}>
+            AnyDrop
+          </div>
           <Menu
           className='sidebar-menu'
             mode="vertical"

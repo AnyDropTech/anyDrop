@@ -57,7 +57,9 @@
         "height": 600,
         "resizable": true,
         "title": "taruri-app",
-        "width": 800
+        "width": 800,
+        "fileDropEnabled": true,
+        "center": true
       }
     ]
   },
