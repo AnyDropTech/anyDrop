@@ -16,7 +16,7 @@ function App() {
           {/* 布局组件 */}
           <Route path="/" element={<DefaultLayout />}>
             {/* 发现 */}
-            <Route index path="find" element={<Find />} />
+            <Route index path="/" element={<Find />} />
             {/* Home */}
             <Route path='setting' element={<Home />} />
             {/* 传输 */}
