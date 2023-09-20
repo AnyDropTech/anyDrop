@@ -120,6 +120,11 @@ function Find() {
     setCurrentFiles([])
   }
 
+  const handleRemoveFileItem = (index: number) => {
+    pendingFiles.splice(index, 1)
+    setPendingFiles([...pendingFiles])
+  }
+
   useEffect(() => {
     const dropDestory = tauriEvent.listen<string[]>('tauri://file-drop', handleFileDrop)
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
@@ -186,7 +191,7 @@ function Find() {
             {isDragOver
               ? <div className={['drag-container', isDragOver ? 'drag-over' : ''].join(' ')}><DropOverUi /></div>
               : pendingFiles.length > 0
-                ? <FileList fileList={pendingFiles} />
+                ? <FileList fileList={pendingFiles} handleRemoveItem={handleRemoveFileItem} />
                 : <div className={['drag-container', isDragOver ? 'drag-over' : ''].join(' ')}><DropUi /></div>
             }
           </div>

@@ -2,12 +2,6 @@ use local_ipaddress;
 use rfd::FileDialog;
 
 #[tauri::command]
-pub fn start_disconvery() {}
-
-#[tauri::command]
-fn stop_discovery() {}
-
-#[tauri::command]
 pub fn select_send_files() {}
 
 #[tauri::command]

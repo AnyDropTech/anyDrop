@@ -1,26 +1,25 @@
 //! Service daemon for client config.
-use std::fs::{metadata, self};
+use std::{fs::{metadata, self}, path::PathBuf};
 
 use rfd::FileDialog;
-use tauri::{path::BaseDirectory, Manager};
+use tauri::{path::BaseDirectory, Manager, utils::config};
 use crate::{error::Result, global::get_app_handle};
 
 pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
 
+pub const CLIENT_CONFIG_FILE_NAME: &str = "anydrop.config.conf";
 /**
  * 客户端配置
  */
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ClientConfig {
-  id: String,
-  nickname: String,
-  device_name: String,
-  password: String,
-  receive: bool,
-  auto_receive: bool,
-  receive_dir: String,
-  history: bool
+  pub id: String,
+  pub nickname: String,
+  pub device_name: String,
+  pub password: String,
+  pub receive_dir: String,
+  pub history: bool
 }
 
 impl ClientConfig {
@@ -29,16 +28,27 @@ impl ClientConfig {
    */
   pub fn new() -> Result<Self> {
     let uni_id = crate::utils::generate_magic_string();
-    Ok(Self {
+    let config_path = Self::get_client_config_path();
+    let receiver_dir = config_path.clone().into_os_string().to_str().unwrap().to_string();
+    let self_data = Self {
       id: uni_id,
       nickname: "".to_string(),
       device_name: "".to_string(),
       password: "".to_string(),
-      receive: false,
-      auto_receive: false,
-      receive_dir: "".to_string(),
+      receive_dir: receiver_dir,
       history: false
-    })
+    };
+    if !metadata(&config_path).is_ok() {
+      // 如果配置文件不存在，则创建配置文件
+      let config = self_data.clone();
+      let config_str = serde_json::to_string(&config).unwrap();
+      fs::write(&config_path, config_str).expect("Unable to write file");
+    };
+    Ok(self_data)
+  }
+
+  pub fn get_client_config_path() -> PathBuf {
+    get_app_handle().path().resolve(CLIENT_CONFIG_FILE_NAME, BaseDirectory::Document).unwrap().clone()
   }
 
   /**
@@ -46,7 +56,7 @@ impl ClientConfig {
    */
   pub fn get_config_from_fs() -> ClientConfig {
     // 从文件系统中读取配置 "anydrop.config.conf"
-    let config_path = get_app_handle().path().resolve("anydrop.config.conf", BaseDirectory::Download).unwrap().clone();
+    let config_path = Self::get_client_config_path();
     if !metadata(&config_path).is_ok() {
       // 如果配置文件不存在，则创建配置文件
       let config = ClientConfig::new().unwrap();

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use mdns_sd::{ServiceInfo, ServiceDaemon, TxtProperties, ServiceEvent};
 use serde_json::Value;
 
+use crate::global::get_global_client_config;
 use crate::{error::Result, client_config::{SERVICE_TYPE, PORT}};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -14,7 +15,6 @@ pub struct ClientDevice {
   device_name: String,
   password: String
 }
-
 #[derive(Clone)]
 pub struct ClientConnector {
   sender_mdns: Option<ServiceDaemon>,
@@ -141,6 +141,7 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
 }
 
 pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns: ServiceDaemon) {
+
   let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
   std::thread::spawn(move || {
     while let Ok(event) = receiver.recv() {
@@ -219,4 +220,16 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
       std::thread::sleep(Duration::from_secs(1));
     }
   });
+}
+
+pub fn init_client_connector() {
+  let client_connector = ClientConnector::new().unwrap();
+  let client_config = get_global_client_config();
+  let client_device = ClientDevice {
+    nickname: client_config.nickname.clone(),
+    device_name: client_config.device_name.clone(),
+    password: client_config.password.clone()
+  };
+  client_connector.register(client_device);
+  client_connector.discovery();
 }
