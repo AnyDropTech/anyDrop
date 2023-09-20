@@ -5,13 +5,14 @@ import './fileList.scss'
 export interface IFileItem {
   name: string
   size: string
+  ext: string
 }
 export interface IProps {
   fileList: IFileItem[]
 }
 
 function FileItem(props: IFileItem) {
-  const FileIcon = () => getFileTypeIcon(props.name)
+  const FileIcon = () => getFileTypeIcon(props.ext)
   return (
     <div className="file-item">
       <div className="file-icon"><FileIcon /></div>
@@ -26,7 +27,7 @@ export function FileList(props: IProps) {
   return (
     <div className="file-list">
       {
-        fileList.map(item => <FileItem {...item} />)
+        fileList.map((item, index) => <FileItem {...item} key={`file-item${index}`}/>)
       }
     </div>
   )

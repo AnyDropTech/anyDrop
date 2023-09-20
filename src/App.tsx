@@ -8,6 +8,8 @@ import Find from './views/find'
 import Home from './views/home'
 import Transfer from './views/transfer'
 
+import './App.css'
+
 function App() {
   return (
     <ConfigProvider locale={zhCN}>
