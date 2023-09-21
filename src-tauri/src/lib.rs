@@ -11,7 +11,7 @@ use client_connector::init_client_connector;
 use global::{set_app_handle, set_global_client_config, set_global_window};
 use tauri::Manager;
 
-use crate::client_command::{locale_ip, select_target_save_dir};
+use crate::{client_command::{locale_ip, select_target_save_dir}, global::{init_client_config, save_client_config}};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,6 +31,8 @@ pub fn run() {
     })
     .invoke_handler(tauri::generate_handler![
       locale_ip,
+      init_client_config,
+      save_client_config,
       select_target_save_dir
     ])
     .run(tauri::generate_context!())

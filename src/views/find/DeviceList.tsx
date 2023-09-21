@@ -50,7 +50,6 @@ export const DeviceItem: React.FC<{ data: IDevice }> = (props) => {
 }
 
 export default function DeviceList(props: IDevicesProps) {
-  console.log('🚀 ~ file: DeviceList.tsx:31 ~ DeviceList ~ props:', props)
   return (
     <div className="device-list">
       {props.listData.map((item, index) => (

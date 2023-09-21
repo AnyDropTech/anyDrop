@@ -44,6 +44,18 @@ pub fn get_global_client_config() -> &'static ClientConfig {
 pub fn try_get_global_client_config() -> Option<&'static ClientConfig> {
   unsafe { GLOABL_CLIENT_CONFIG.as_ref() }
 }
+// 获取全局变量注入js
+#[tauri::command]
+pub fn init_client_config() -> ClientConfig {
+  let config = get_global_client_config();
+  config.clone()
+}
+// 保存全局变量注入js
+#[tauri::command]
+pub fn save_client_config(config: ClientConfig) {
+  set_global_client_config(config)
+}
+
 
 // 全局窗口
 pub static mut GLOBAL_WINDOW: Option<Window> = None;

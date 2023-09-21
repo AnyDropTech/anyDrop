@@ -4,7 +4,9 @@ use std::{fs::{metadata, self}, path::PathBuf};
 use rfd::FileDialog;
 use tauri::{path::BaseDirectory, Manager};
 use tauri_plugin_os::hostname;
-use crate::{error::Result, global::get_app_handle, utils::{generate_uuid, generate_magic_string}};
+use crate::{error::Result, global::get_app_handle, utils::{generate_uuid, random_num, generate_magic_string}};
+
+use local_ipaddress;
 
 pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
@@ -16,6 +18,7 @@ pub const CLIENT_CONFIG_FILE_NAME: &str = "anydrop.config.conf";
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ClientConfig {
   pub id: String,
+  pub ip: String,
   pub nickname: String,
   pub device_name: String,
   pub password: String,
@@ -28,14 +31,16 @@ impl ClientConfig {
    * 创建一个新的客户端配置
    */
   pub fn new() -> Result<Self> {
-    let uni_id = crate::utils::generate_magic_string();
+    let uni_id = generate_magic_string();
     let config_path = Self::get_client_config_path();
     let receiver_dir = config_path.clone().into_os_string().to_str().unwrap().to_string();
     let hostname = hostname().clone();
-    let nickname = format!("AnyDrop-{}",  generate_magic_string());
+    let nickname = format!("AnyDrop-{}",  random_num(4));
     let password = generate_uuid();
+    let ip = local_ipaddress::get().unwrap();
     let self_data = Self {
       id: uni_id,
+      ip: ip.to_string(),
       nickname: nickname.to_string(),
       device_name: hostname.to_string(),
       password: password.to_string(),

@@ -120,6 +120,7 @@ function Find() {
   }), [setCurrentFiles, setIsDragOver])
 
   const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
+    console.log('🚀 ~ file: index.tsx:123 ~ handleDiscovery ~ res:', res)
     const deviceLists = res.payload
     const onlineDevices: IQueryRes[] = []
     const offlineDevices: IQueryRes[] = []
@@ -129,7 +130,9 @@ function Find() {
       else
         onlineDevices.push(device)
     })
-  }, [])
+    setOnlineDevices(onlineDevices)
+    setOfflineDevices(offlineDevices)
+  }, [setOnlineDevices, setOfflineDevices])
 
   const handleClearFiles = () => {
     setPendingFiles([])
@@ -142,6 +145,7 @@ function Find() {
   }
 
   useEffect(() => {
+    console.log('mount')
     const dropDestory = tauriEvent.listen<string[]>('tauri://file-drop', handleFileDrop)
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
@@ -150,12 +154,13 @@ function Find() {
     const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
 
     return () => {
+      console.log('unmount')
       dropDestory.then(destory => destory())
       dropHoverDestory.then(destory => destory())
       dropHoverCancelDestory.then(destory => destory())
       discoveryDestory.then(destory => destory())
     }
-  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled])
+  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleDiscovery, TAURI_EVENT])
 
   const DropUi = memo(() => {
     return (

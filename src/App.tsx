@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import DefaultLayout from './layouts/default'
 import Find from './views/find'
-import Home from './views/home'
+import Setting from './views/setting'
 import Transfer from './views/transfer'
 
 import './App.css'
@@ -19,8 +19,8 @@ function App() {
           <Route path="/" element={<DefaultLayout />}>
             {/* 发现 */}
             <Route index path="/" element={<Find />} />
-            {/* Home */}
-            <Route path='setting' element={<Home />} />
+            {/* Setting */}
+            <Route path='setting' element={<Setting />} />
             {/* 传输 */}
             <Route path="transfer" element={<Transfer />} />
           </Route>

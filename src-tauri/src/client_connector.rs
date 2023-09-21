@@ -143,18 +143,20 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
 
 pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns: ServiceDaemon) {
   let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
+  let mut count = 1;
   std::thread::spawn(move || {
     while let Ok(event) = receiver.recv() {
       match event {
         ServiceEvent::SearchStarted(ty_domain) => {
-            println!("Search started for {}", &ty_domain);
+          println!("search_count: 【{:?}】", count);
+          println!("Search started for {}", &ty_domain);
         }
         ServiceEvent::ServiceFound(_ty_domain, fullname) => {
             println!("Found a new service: {}", &fullname);
         }
         ServiceEvent::ServiceResolved(info) => {
           let service_info = info.clone();
-          println!("test ================== {:?}", service_info);
+          // println!("test ================== {:?}", service_info);
           if service_info.get_type() == SERVICE_TYPE  {
             // println!("test ================== {:?}", service_info);
             let res = parse_info((
@@ -166,6 +168,7 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
             ));
             // 将结果添加到HashMap中
             let exists = result_vec.iter().any(|item| *item == res);
+            println!("==++++++++exists: {:?}", exists);
             if !exists {
               result_vec.push(res.clone());
             }
@@ -206,12 +209,9 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
         }
       }
 
-      // println!("info {:?}", result_vec.clone());
-      // let _ = window.emit("service_discovery", result_vec.clone());
+      println!("info {:?}", result_vec.clone());
       let _ = get_global_window().emit("AnyDrop://client_connector_discovery", result_vec.clone());
-      // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
       let mut i = 0;
-      // println!("result_vec.len(), {:?}", result_vec.len());
       while i < result_vec.len() {
         let current = result_vec[i].clone();
         let fullname = current.get("fullname").unwrap().as_str().unwrap().to_string();
@@ -219,6 +219,7 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
         let _ = mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
         i+=1;
       }
+      count += 1;
       std::thread::sleep(Duration::from_secs(1));
     }
   });

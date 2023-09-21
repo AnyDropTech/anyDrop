@@ -15,6 +15,31 @@ use rand::Rng;
 //   set_shadow(&window, true).expect("Unsupported platform!");
 // }
 
+/**
+ * Generate a random number
+ *
+ * # Arguments
+ *
+ * * `limit` - The number of digits in the random number (default: 4)
+ *
+ * # Returns
+ *
+ * A random number as a String.
+ */
+pub fn random_num(limit: usize) -> String {
+  const CHARACTERS: &str = "0123456789";
+  let mut rng = rand::thread_rng();
+  let mut result = String::new();
+
+  for _ in 0..limit {
+    let random_index = rng.gen_range(0..CHARACTERS.len());
+    let random_char = CHARACTERS.chars().nth(random_index).unwrap();
+    result.push(random_char);
+  }
+  result
+}
+
+
 pub fn generate_uuid() -> String {
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let mut result = String::new();

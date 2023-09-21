@@ -36,7 +36,7 @@ function DefaultLayout() {
   function handleMenuClick({ key }: any) {
     switch (key) {
       case '1':
-        navigateTo('/find')
+        navigateTo('/')
         break
       case '2':
         navigateTo('/send')
