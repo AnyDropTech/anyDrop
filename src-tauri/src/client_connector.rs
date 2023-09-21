@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use mdns_sd::{ServiceInfo, ServiceDaemon, TxtProperties, ServiceEvent};
 use serde_json::Value;
 
-use crate::global::get_global_client_config;
+use crate::global::{get_global_client_config, get_global_window};
 use crate::{error::Result, client_config::{SERVICE_TYPE, PORT}};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -63,6 +63,7 @@ impl ClientConnector {
   }
 
   pub fn register(&self, properties: ClientDevice) {
+    println!("properties: {:?}", properties);
     let my_addrs = self.get_my_local_ipv4().unwrap();
     let password = &properties.password.clone();
     let instance_name = &format!("{password}.local.");
@@ -80,9 +81,9 @@ impl ClientConnector {
 
     let mdns = self.sender_mdns.as_ref().unwrap();
     let monitor = mdns.monitor().expect("Failed to monitor the daemon");
-    match mdns.register(service_info) {
+    match mdns.register(service_info.clone()) {
       Ok(_) => {
-        println!("Service registered");
+        println!("Service registered：{:?}", service_info.get_fullname());
       },
       Err(e) => {
         println!("Service register failed: {:?}", e);
@@ -141,7 +142,6 @@ fn parse_info(res: (HashSet<Ipv4Addr>, String, String, u16, TxtProperties)) -> s
 }
 
 pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns: ServiceDaemon) {
-
   let mut result_vec = Vec::new(); // 创建一个空的 Vec 来存储结果
   std::thread::spawn(move || {
     while let Ok(event) = receiver.recv() {
@@ -201,12 +201,14 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
             i+=1;
           };
           // let _ = window.emit("service_discovery", result_vec.clone());
+          let _ = get_global_window().emit("AnyDrop://client_connector_discovery", result_vec.clone());
           continue;
         }
       }
 
       // println!("info {:?}", result_vec.clone());
       // let _ = window.emit("service_discovery", result_vec.clone());
+      let _ = get_global_window().emit("AnyDrop://client_connector_discovery", result_vec.clone());
       // mdns.verify(fullname.clone(), SERVICE_TYPE.to_string());
       let mut i = 0;
       // println!("result_vec.len(), {:?}", result_vec.len());
@@ -225,6 +227,7 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
 pub fn init_client_connector() {
   let client_connector = ClientConnector::new().unwrap();
   let client_config = get_global_client_config();
+  println!("client_config: {:?}", client_config);
   let client_device = ClientDevice {
     nickname: client_config.nickname.clone(),
     device_name: client_config.device_name.clone(),

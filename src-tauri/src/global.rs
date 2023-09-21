@@ -1,4 +1,4 @@
-use tauri::AppHandle;
+use tauri::{AppHandle, Window};
 
 use crate::client_config::ClientConfig;
 
@@ -30,17 +30,34 @@ pub fn try_get_app_handle() -> Option<&'static AppHandle> {
 
 // 全局配置
 pub static mut GLOABL_CLIENT_CONFIG: Option<ClientConfig> = None;
-
+// 设置全局配置
 pub fn set_global_client_config(client_config: ClientConfig) {
   unsafe {
     GLOABL_CLIENT_CONFIG = Some(client_config);
   }
 }
-
+// 获取全局变量
 pub fn get_global_client_config() -> &'static ClientConfig {
   try_get_global_client_config().expect("Could not get the global client config.")
 }
-
+// 获取全局变量
 pub fn try_get_global_client_config() -> Option<&'static ClientConfig> {
   unsafe { GLOABL_CLIENT_CONFIG.as_ref() }
+}
+
+// 全局窗口
+pub static mut GLOBAL_WINDOW: Option<Window> = None;
+// 设置全局窗口
+pub fn set_global_window(window: Window) {
+  unsafe {
+    GLOBAL_WINDOW = Some(window);
+  }
+}
+// 获取全局窗口
+pub fn get_global_window() -> &'static Window {
+  try_get_global_window().expect("Could not get the global window.")
+}
+// 获取全局窗口
+pub fn try_get_global_window() -> Option<&'static Window> {
+  unsafe { GLOBAL_WINDOW.as_ref() }
 }

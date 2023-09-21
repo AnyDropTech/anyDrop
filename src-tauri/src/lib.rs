@@ -8,7 +8,8 @@ pub mod utils;
 
 use client_config::ClientConfig;
 use client_connector::init_client_connector;
-use global::{set_app_handle, set_global_client_config};
+use global::{set_app_handle, set_global_client_config, set_global_window};
+use tauri::Manager;
 
 use crate::client_command::{locale_ip, select_target_save_dir};
 
@@ -19,6 +20,7 @@ pub fn run() {
     .plugin(tauri_plugin_os::init())
     .setup(|app| {
       // 设置全局state
+      set_global_window(app.get_window("main").unwrap().clone());
       set_app_handle(app.handle().clone());
       let client_config = ClientConfig::new().unwrap();
       set_global_client_config(client_config);

@@ -74,6 +74,7 @@ dependencies = [
  "mdns",
  "mdns-sd",
  "names",
+ "rand 0.8.5",
  "rfd",
  "serde",
  "serde_json",

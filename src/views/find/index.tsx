@@ -17,6 +17,10 @@ import type { IQueryRes } from './types'
 
 import './index.scss'
 
+enum TAURI_EVENT {
+  DISCOVERY = 'AnyDrop://client_connector_discovery',
+}
+
 async function getFileInfo(paths: string[]) {
   const fileInfos: Array<IFileItem> = []
   for (let i = 0; i < paths.length; i++) {
@@ -115,6 +119,18 @@ function Find() {
     setCurrentFiles([])
   }), [setCurrentFiles, setIsDragOver])
 
+  const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
+    const deviceLists = res.payload
+    const onlineDevices: IQueryRes[] = []
+    const offlineDevices: IQueryRes[] = []
+    deviceLists.forEach((device) => {
+      if (device.offline)
+        offlineDevices.push(device)
+      else
+        onlineDevices.push(device)
+    })
+  }, [])
+
   const handleClearFiles = () => {
     setPendingFiles([])
     setCurrentFiles([])
@@ -130,10 +146,14 @@ function Find() {
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
 
+    // 发现设备
+    const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
+
     return () => {
       dropDestory.then(destory => destory())
       dropHoverDestory.then(destory => destory())
       dropHoverCancelDestory.then(destory => destory())
+      discoveryDestory.then(destory => destory())
     }
   }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled])
 

@@ -1,5 +1,6 @@
 use if_addrs::{IfAddr, Ifv4Addr};
 use names::Generator;
+use rand::Rng;
 
 // use tauri::{Runtime, Manager};
 
@@ -13,6 +14,23 @@ use names::Generator;
 //   let window = app.get_window("custom").unwrap();
 //   set_shadow(&window, true).expect("Unsupported platform!");
 // }
+
+pub fn generate_uuid() -> String {
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let mut result = String::new();
+
+  for i in 0..4 {
+    for _ in 0..4 {
+      let random_index = rand::thread_rng().gen_range(0..characters.len());
+      result.push(characters.chars().nth(random_index).unwrap());
+    }
+    if i < 3 {
+      result.push('-');
+    }
+  }
+
+  result
+}
 
 pub fn my_ipv4_interfaces() -> Vec<Ifv4Addr> {
   if_addrs::get_if_addrs()

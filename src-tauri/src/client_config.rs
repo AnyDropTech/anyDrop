@@ -2,8 +2,9 @@
 use std::{fs::{metadata, self}, path::PathBuf};
 
 use rfd::FileDialog;
-use tauri::{path::BaseDirectory, Manager, utils::config};
-use crate::{error::Result, global::get_app_handle};
+use tauri::{path::BaseDirectory, Manager};
+use tauri_plugin_os::hostname;
+use crate::{error::Result, global::get_app_handle, utils::{generate_uuid, generate_magic_string}};
 
 pub const SERVICE_TYPE: &str = "_rope._tcp.local.";
 pub const PORT: u16 = 17682;
@@ -30,11 +31,14 @@ impl ClientConfig {
     let uni_id = crate::utils::generate_magic_string();
     let config_path = Self::get_client_config_path();
     let receiver_dir = config_path.clone().into_os_string().to_str().unwrap().to_string();
+    let hostname = hostname().clone();
+    let nickname = format!("AnyDrop-{}",  generate_magic_string());
+    let password = generate_uuid();
     let self_data = Self {
       id: uni_id,
-      nickname: "".to_string(),
-      device_name: "".to_string(),
-      password: "".to_string(),
+      nickname: nickname.to_string(),
+      device_name: hostname.to_string(),
+      password: password.to_string(),
       receive_dir: receiver_dir,
       history: false
     };
