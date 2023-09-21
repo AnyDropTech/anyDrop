@@ -55,11 +55,26 @@ function Find() {
     }, 1000)
   }
 
+  const [selectDevice, setSelectDevice] = useState<IQueryRes[]>([])
+  const handleSelectItem = (item: IQueryRes) => {
+    const index = selectDevice.findIndex(device => device.fullname === item.fullname)
+    if (index > -1) {
+      selectDevice.splice(index, 1)
+      setSelectDevice([...selectDevice])
+    }
+    else {
+      setSelectDevice([...selectDevice, item])
+    }
+  }
+
+  const handleCheckSelected = (item: IQueryRes) => {
+    return selectDevice.some(device => device.fullname === item.fullname)
+  }
   const items: CollapseProps['items'] = [
     {
       key: 'online',
       label: '在线设备',
-      children: <DeviceList listData={onlineDevices} />,
+      children: <DeviceList listData={onlineDevices} checkSelected={handleCheckSelected} setSelectDevice={handleSelectItem}/>,
     },
     {
       key: 'offline',
@@ -227,7 +242,7 @@ function Find() {
             <WifiIcon />
             <span>116b</span>
           </div>
-          <Button block type="primary" className='send-btn'>发&nbsp;&nbsp;&nbsp;&nbsp;送</Button>
+          <Button block type="primary" disabled={pendingFiles.length === 0 || selectDevice.length === 0} className='send-btn'>发&nbsp;&nbsp;&nbsp;&nbsp;送</Button>
         </div>
       </div>
     </div>

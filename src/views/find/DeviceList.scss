@@ -1,10 +1,15 @@
 .device-list {
   display: flex;
   flex-direction: column;
-  padding: 16px 0;
+  // padding: 16px 0;
   .device-item {
     display: flex;
     flex-wrap: nowrap;
+    align-items: center;
+    cursor: pointer;
+    &.active {
+      background-color: #f5f5f5;
+    }
     &__icon {
       width: 40px;
       height: 40px;
@@ -25,17 +30,17 @@
       }
     }
     &-info {
-      margin-left: 20px;
+      margin-left: 10px;
       display: flex;
       flex-direction: column;
     }
     &-name {
-      font-size: 20px;
+      font-size: 16px;
       font-family: Georgia, 'Times New Roman', Times, serif;
       font-weight: 500;
     }
     &-device_name {
-      font-size: 16px;
+      font-size: 14px;
       color: #666;
     }
   }

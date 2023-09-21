@@ -167,7 +167,8 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
               service_info.clone().get_properties().clone(),
             ));
             // 将结果添加到HashMap中
-            let exists = result_vec.iter().any(|item| *item == res);
+            // let exists = result_vec.iter().any(|item| *item == res);
+            let exists = result_vec.clone().iter().any(|item: &Value| item.get("fullname").unwrap().as_str().unwrap() == res.get("fullname").unwrap().as_str().unwrap()).clone();
             println!("==++++++++exists: {:?}", exists);
             if !exists {
               result_vec.push(res.clone());
@@ -220,7 +221,7 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
         i+=1;
       }
       count += 1;
-      std::thread::sleep(Duration::from_secs(1));
+      // std::thread::sleep(Duration::from_secs(1));
     }
   });
 }
