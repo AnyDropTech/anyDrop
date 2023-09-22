@@ -63,7 +63,6 @@ impl ClientConnector {
   }
 
   pub fn register(&self, properties: ClientDevice) {
-    println!("properties: {:?}", properties);
     let my_addrs = self.get_my_local_ipv4().unwrap();
     let password = &properties.password.clone();
     let instance_name = &format!("{password}.local.");
@@ -169,14 +168,14 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
             // 将结果添加到HashMap中
             // let exists = result_vec.iter().any(|item| *item == res);
             let exists = result_vec.clone().iter().any(|item: &Value| item.get("fullname").unwrap().as_str().unwrap() == res.get("fullname").unwrap().as_str().unwrap()).clone();
-            println!("==++++++++exists: {:?}", exists);
+            // println!("==++++++++exists: {:?}", exists);
             if !exists {
               result_vec.push(res.clone());
             }
           }
         }
         ServiceEvent::ServiceRemoved(service_type, service_fullname) => {
-          println!("========================removed: {:?}-{:?}", service_type, service_fullname);
+          // println!("========================removed: {:?}-{:?}", service_type, service_fullname);
           let mut i = 0;
           while i < result_vec.len() {
             let current = result_vec[i].clone();
@@ -210,7 +209,7 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
         }
       }
 
-      println!("info {:?}", result_vec.clone());
+      // println!("info {:?}", result_vec.clone());
       let _ = get_global_window().emit("AnyDrop://client_connector_discovery", result_vec.clone());
       let mut i = 0;
       while i < result_vec.len() {
@@ -229,7 +228,6 @@ pub fn discovery_events(receiver: mdns_sd::Receiver<mdns_sd::ServiceEvent>, mdns
 pub fn init_client_connector() {
   let client_connector = ClientConnector::new().unwrap();
   let client_config = get_global_client_config();
-  println!("client_config: {:?}", client_config);
   let client_device = ClientDevice {
     nickname: client_config.nickname.clone(),
     device_name: client_config.device_name.clone(),
