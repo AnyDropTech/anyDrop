@@ -5,13 +5,15 @@ pub mod client_config;
 pub mod client_connector;
 pub mod global;
 pub mod utils;
+mod client_transfer;
 
 use client_config::ClientConfig;
 use client_connector::init_client_connector;
+use client_transfer::init_tcplistener;
 use global::{set_app_handle, set_global_client_config, set_global_window};
 use tauri::Manager;
 
-use crate::{client_command::{locale_ip, select_target_save_dir}, global::{init_client_config, save_client_config}};
+use crate::{client_command::{locale_ip, select_target_save_dir}, global::{init_client_config, save_client_config}, client_transfer::{select_send_dir, select_send_file, send_file_confirmation}};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,6 +21,7 @@ pub fn run() {
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_os::init())
     .setup(|app| {
+
       // 设置全局state
       set_global_window(app.get_window("main").unwrap().clone());
       set_app_handle(app.handle().clone());
@@ -27,13 +30,19 @@ pub fn run() {
 
       // 初始化客户端连接器
       init_client_connector();
+
+      // 初始化tcp链接
+      init_tcplistener();
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![
       locale_ip,
       init_client_config,
       save_client_config,
-      select_target_save_dir
+      select_target_save_dir,
+      select_send_dir,
+      select_send_file,
+      send_file_confirmation
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
