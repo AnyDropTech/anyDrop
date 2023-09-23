@@ -8,39 +8,47 @@ use tokio::{net::{TcpListener, TcpStream}, io::AsyncWriteExt};
 
 pub const CLIENT_PORT: u32 = 16008;
 
-// pub static mut
+/**
+ * 初始化tcp监听器
+ */
 pub fn init_tcplistener() {
   let addr = format!("0.0.0.0:{}", CLIENT_PORT);
 
   tokio::spawn(async move {
-    let listener = TcpListener::bind(addr).await.expect("监听地址绑定失败");
+    let listener = TcpListener::bind(&addr).await.expect("监听地址绑定失败");
     println!("监听地址: {}", listener.local_addr().unwrap());
     println!("监听端口: {}", CLIENT_PORT);
 
-    match listener.accept().await {
-      Ok((mut client_socket, addr)) => {
-        println!("接收到来自{:?}的连接", addr);
-        // 读取确认消息
-        let mut confirmation_buf = [0; 4096];
-        let _ = client_socket.readable().await;
+    while let Ok((client_socket, _)) = listener.accept().await {
+      tokio::spawn(async move {
+        // 单独处理每个客户端连接
+        handle_client(client_socket).await;
+      });
+    };
+  });
+}
 
-        match client_socket.try_read(&mut confirmation_buf) {
-          Ok(_) => {
-            let confirmation_msg = String::from_utf8_lossy(&confirmation_buf);
-            client_socket.shutdown().await.expect("关闭连接失败");
-          },
-          Err(e) => {
-            println!("读取确认消息失败: {}", e);
-            return;
-          }
-        }
-      }
+/**
+ * 处理客户端连接
+ */
+async fn handle_client(client_socket: TcpStream) {
+  // 读取确认消息
+  let mut confirmation_buf = [0; 4096];
+  let _ = client_socket.readable().await;
+
+  if let is_read = client_socket.readable().await.is_ok() {
+    match client_socket.try_read(&mut confirmation_buf) {
+      Ok(_) => {
+        let confirmation_msg = String::from_utf8_lossy(&confirmation_buf);
+        println!("接收到确认消息: {}", confirmation_msg);
+        // client_socket.shutdown().await.expect("关闭连接失败");
+      },
       Err(e) => {
-        println!("接收连接失败: {}", e);
+        println!("读取确认消息失败: {}", e);
         return;
       }
     }
-  });
+  }
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -58,6 +66,9 @@ struct SendFileInfo {
   id: String
 }
 
+/**
+ * 发送文件确认消息
+ */
 #[tauri::command]
 pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
     // 连接到目标设备
@@ -104,6 +115,8 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
     // target_socket.write_all(confirmation_msg).await.map_err(|e| e.to_string())?;
     Ok(())
 }
+
+fn send_file_service(client_socket: TcpStream, files: &Vec<FileInfoItem>) {}
 
 /**
  * 选择发送文件
