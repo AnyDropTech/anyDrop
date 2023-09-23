@@ -39,10 +39,10 @@ function DefaultLayout() {
         navigateTo('/')
         break
       case '2':
-        navigateTo('/send')
+        navigateTo('/sender')
         break
       case '3':
-        navigateTo('/reciver')
+        navigateTo('/recever')
         break
       case '4':
         navigateTo('/setting')

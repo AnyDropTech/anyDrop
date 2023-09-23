@@ -1,0 +1,85 @@
+.page-transfer, .page-recever {
+  padding: 36px;
+  .device-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .device-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .device-item-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .device-item-files {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 20px;
+  }
+  .device-file-container {
+    width: 100%;
+  }
+  .file-info {
+    &-item {
+      display: flex;
+      .file-name {
+        flex: 1;
+      }
+    }
+  }
+  .file-status-content {
+    width: 100%;
+    display: flex;
+    margin-top: 12px;
+    .file-status-icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+    }
+    .file-status-box {
+      flex: 1;
+    }
+    .file-remove {
+      width: 20px;
+      height: 20px;
+    }
+  }
+  .file-save-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 20px;
+    &__icon {
+      height: 32px;
+      margin-right: 10px;
+      display: flex;
+      .icon {
+        width: 32px;
+        height: 32px;
+        margin-right: 10px;
+      }
+    }
+    .file-total-size {
+      display: flex;
+      margin-left: 20px;
+      .icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 5px;
+      }
+    }
+  }
+}

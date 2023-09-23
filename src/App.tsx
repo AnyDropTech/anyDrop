@@ -9,6 +9,8 @@ import DefaultLayout from './layouts/default'
 import Find from './views/find'
 import Setting from './views/setting'
 import Transfer from './views/transfer'
+import Recever from './views/transfer/recever'
+import Sender from './views/transfer/sender'
 import { useStore } from './store'
 import type { ISendFileInfo } from './types'
 
@@ -37,6 +39,8 @@ function App() {
           <Route path="/" element={<DefaultLayout />}>
             {/* 发现 */}
             <Route index path="/" element={<Find />} />
+            <Route index path="/sender" element={<Sender />} />
+            <Route index path="/recever" element={<Recever />} />
             {/* Setting */}
             <Route path='setting' element={<Setting />} />
             {/* 传输 */}
