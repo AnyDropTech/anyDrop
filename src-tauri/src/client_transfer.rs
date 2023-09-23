@@ -13,7 +13,7 @@ pub fn init_tcplistener() {
   let addr = format!("0.0.0.0:{}", CLIENT_PORT);
 
   tokio::spawn(async move {
-    let listener = TcpListener::bind(addr).await.unwrap();
+    let listener = TcpListener::bind(addr).await.expect("监听地址绑定失败");
     println!("监听地址: {}", listener.local_addr().unwrap());
     println!("监听端口: {}", CLIENT_PORT);
 
@@ -43,19 +43,49 @@ pub fn init_tcplistener() {
   });
 }
 
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct FileInfoItem {
+  name: String,
+  size: u64,
+  path: String
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct SendFileInfo {
+  ip: String,
+  port: u32,
+  files: Vec<FileInfoItem>,
+  id: String
+}
+
 #[tauri::command]
 pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
     // 连接到目标设备
-    let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().unwrap();
-    let target_socket = TcpStream::connect(target_addr).await.unwrap();
-
+    let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
+    let target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
 
     // 发送确认消息
-    let confirmation_msg = b"READY_TO_RECEIVE";
+    let file_info = SendFileInfo {
+      id: "aaa".to_string(),
+      ip: "127.0.0.1".to_string(),
+      port: 16008,
+      files: vec![
+        FileInfoItem {
+          name: "test.txt".to_string(),
+          size: 1024,
+          path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string()
+        }
+      ]
+    };
+    let json_info = serde_json::to_string(&file_info).unwrap();
+    let confirmation_msg = json_info.as_bytes();
     let _ = target_socket.writable().await;
 
     match target_socket.try_write(confirmation_msg) {
-      Ok(_) => {},
+      Ok(_) => {
+        println!("发送确认消息成功");
+
+      },
       Err(e) => {
         println!("发送确认消息失败: {}", e);
         return Err(e.to_string());
