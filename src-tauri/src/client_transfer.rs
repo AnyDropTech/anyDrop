@@ -1,12 +1,38 @@
 //! Service daemon for client transfer.
 
-use std::{path::PathBuf, net::{SocketAddr, Shutdown}};
+use std::{path::PathBuf, net::SocketAddr};
 
 pub use anyhow::Result as AResult;
 use rfd::FileDialog;
 use tokio::{net::{TcpListener, TcpStream}, io::AsyncWriteExt};
 
+use crate::global::get_global_window;
+
 pub const CLIENT_PORT: u32 = 16008;
+
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct FileInfoItem {
+  name: String,
+  size: u64,
+  path: String
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct SendFileInfo {
+  ip: String,
+  port: u32,
+  files: Vec<FileInfoItem>,
+  id: String
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct SendMessage <S>{
+  msg_type: String,
+  playload: S
+}
+
+
 
 /**
  * 初始化tcp监听器
@@ -33,14 +59,15 @@ pub fn init_tcplistener() {
  */
 async fn handle_client(client_socket: TcpStream) {
   // 读取确认消息
-  let mut confirmation_buf = [0; 4096];
+  let mut confirmation_buf = [0; 1024];
   let _ = client_socket.readable().await;
 
-  if let is_read = client_socket.readable().await.is_ok() {
+  if let _is_read = client_socket.readable().await.is_ok() {
     match client_socket.try_read(&mut confirmation_buf) {
-      Ok(_) => {
-        let confirmation_msg = String::from_utf8_lossy(&confirmation_buf);
-        println!("接收到确认消息: {}", confirmation_msg);
+      Ok(n) => {
+        let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
+        transfer_recever_message(confirmation_msg.to_string());
+        // println!("接收到确认消息: {}", confirmation_msg);
         // client_socket.shutdown().await.expect("关闭连接失败");
       },
       Err(e) => {
@@ -51,19 +78,26 @@ async fn handle_client(client_socket: TcpStream) {
   }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct FileInfoItem {
-  name: String,
-  size: u64,
-  path: String
-}
+fn transfer_recever_message(message: String) {
+  println!("接收到确认消息222: {}", message);
+  let message = serde_json::from_str::<SendMessage<SendFileInfo>>(&message);
+  let window = get_global_window();
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct SendFileInfo {
-  ip: String,
-  port: u32,
-  files: Vec<FileInfoItem>,
-  id: String
+  match message {
+    Ok(parse_message) => {
+      match parse_message.msg_type.as_str() {
+        "confirm" => {
+          let send_file_info: SendFileInfo = parse_message.playload.clone();
+          window.emit::<SendFileInfo>("anyDrop://send_file_confirmation", send_file_info.clone()).expect("发送确认消息失败");
+          println!("接收到确认消息: {:?}", send_file_info.clone());
+        },
+        _ => {}
+      }
+    },
+    Err(e) => {
+      println!("解析确认消息失败: {:?}", e);
+    }
+  }
 }
 
 /**
@@ -95,8 +129,13 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
         }
       ]
     };
-    let json_info = serde_json::to_string(&file_info).unwrap();
-    let confirmation_msg = json_info.as_bytes();
+    let send_message = SendMessage {
+      msg_type: "confirm".to_string(),
+      playload: file_info
+    };
+    // let send_message_value = serde_json::to_value(&send_message).unwrap();
+    let send_mesage_string = serde_json::to_string(&send_message).unwrap();
+    let confirmation_msg = send_mesage_string.as_bytes();
     let _ = target_socket.writable().await;
 
     if target_socket.writable().await.is_ok() {

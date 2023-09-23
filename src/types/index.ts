@@ -6,3 +6,22 @@ export interface IDeviceConfig {
   receive_dir: string
   history: boolean
 }
+
+export interface ISendMessage {
+  type: string
+  data: any
+}
+
+export interface FileInfoItem {
+  name: string
+  size: number
+  path: string
+}
+export interface ISendFileInfo {
+  ip: string
+  id: string
+  fullName: string
+  device_name: string
+  port: number
+  files: Array<FileInfoItem>
+}
