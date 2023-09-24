@@ -4,7 +4,7 @@ use std::{fs::{metadata, self}, path::PathBuf};
 use rfd::FileDialog;
 use tauri::{path::BaseDirectory, Manager};
 use tauri_plugin_os::hostname;
-use crate::{error::Result, global::get_app_handle, utils::{generate_uuid, random_num, generate_magic_string}};
+use crate::{error::Result, global_constants::get_app_handle, utils::{generate_uuid, random_num, generate_magic_string}};
 
 use local_ipaddress;
 

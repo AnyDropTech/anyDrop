@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use mdns_sd::{ServiceInfo, ServiceDaemon, TxtProperties, ServiceEvent};
 use serde_json::Value;
 
-use crate::global::{get_global_client_config, get_global_window};
+use crate::global_constants::{get_global_client_config, get_global_window};
 use crate::{error::Result, client_config::{SERVICE_TYPE, PORT}};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

@@ -3,11 +3,10 @@
 use std::{path::PathBuf, net::SocketAddr};
 
 pub use anyhow::Result as AResult;
+use crate::global_constants::get_global_window;
 use rfd::FileDialog;
 use serde_json::Value;
 use tokio::{net::{TcpListener, TcpStream}, io::AsyncWriteExt};
-
-use crate::global::get_global_window;
 
 pub const CLIENT_PORT: u32 = 16008;
 
