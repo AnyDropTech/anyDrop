@@ -20,7 +20,7 @@ export interface FileInfoItem {
 export interface ISendFileInfo {
   ip: string
   id: string
-  fullName: string
+  fullname: string
   device_name: string
   port: number
   files: Array<FileInfoItem>

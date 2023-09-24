@@ -72,7 +72,7 @@ function DefaultLayout() {
     return () => {
       unlisten.then(res => res())
     }
-  })
+  }, [receiveFileInfo])
 
   return (
     <div className='page'>

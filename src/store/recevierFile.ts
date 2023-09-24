@@ -13,6 +13,16 @@ class RecevireFileInfo {
     this.list.push(devices)
     localStorage.setItem('devices_list', JSON.stringify(this.list))
   }
+
+  getList = () => {
+    if (this.list.length > 0)
+      return this.list
+    const list = localStorage.getItem('devices_list')
+    if (list)
+      this.list = JSON.parse(list)
+
+    return this.list
+  }
 }
 
 export default RecevireFileInfo
