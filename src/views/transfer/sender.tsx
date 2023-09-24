@@ -1,18 +1,10 @@
-import { DeleteIcon, FloderIcon, PendingIcon, UnkownIcon, WifiIcon } from '../../components'
+import { DeleteIcon, PendingIcon, UnkownIcon } from '../../components'
 
 import MacIcon from '../../assets/MacBook.svg'
 
 import './sender.scss'
-import { Button } from 'antd'
 
-interface IProps {
-  data: {
-    nickname: string
-    device_name: string
-  }
-}
-
-function Sender(props: IProps) {
+function Sender() {
   return (
 
     <div className="page-recever">

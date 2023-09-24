@@ -1,8 +1,14 @@
+import { event } from '@tauri-apps/api'
 import { Menu, theme } from 'antd'
+import { useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+
+import { useStore } from '../store'
+import type { ISendFileInfo } from '../types'
 
 import './default.scss'
 
+const turiSendConfirmUri = 'anyDrop://send_file_confirmation'
 const { useToken } = theme
 
 function DefaultLayout() {
@@ -51,6 +57,22 @@ function DefaultLayout() {
         break
     }
   }
+
+  const { receiveFileInfo } = useStore()
+  useEffect(() => {
+    const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, (res) => {
+      const fileInfo = res.payload
+      console.log(fileInfo)
+      if (fileInfo) {
+        receiveFileInfo.setList(fileInfo)
+        navigate('/recever')
+      }
+    })
+
+    return () => {
+      unlisten.then(res => res())
+    }
+  })
 
   return (
     <div className='page'>

@@ -1,55 +1,57 @@
-import { Button } from 'antd'
+import type { MenuProps } from 'antd'
+import { Button, Dropdown, Space } from 'antd'
+
+import { FloderIcon, UnkownIcon, WifiIcon } from '../../components'
+
 import MacIcon from '../../assets/MacBook.svg'
-import { DeleteIcon, FloderIcon, PendingIcon, UnkownIcon, WifiIcon } from '../../components'
 
 import './sender.scss'
+import { useStore } from '../../store'
+import { useEffect, useState } from 'react'
+import { IQueryRes } from '../find/types'
 
 function recever() {
+  const items: MenuProps['items'] = [
+    {
+      label: (
+        <a target="_blank" rel="noopener noreferrer" href="https://www.antgroup.com">
+          1st menu item
+        </a>
+      ),
+      key: '0',
+    },
+    {
+      label: (
+        <a target="_blank" rel="noopener noreferrer" href="https://www.aliyun.com">
+          2nd menu item
+        </a>
+      ),
+      key: '1',
+    },
+    {
+      type: 'divider',
+    },
+  ]
+
+  const { deviceInfo } = useStore()
+
+  const [devices, setDevices] = useState<IQueryRes[]>([])
+
+  useEffect(() => {
+    setDevices(deviceInfo.list)
+  })
   return (
     <div className="page-transfer">
       <div className="device-list">
-        <div className={['device-item'].join(' ')}>
+        {devices.map((item) => {
+          return <div className={['device-item'].join(' ')}>
           <div className="device-item-content">
             <div className="device-item__icon">
               <img src={MacIcon} alt="icon" />
-              {/* <span className='device-status' style={{ backgroundColor: data.color }}></span> */}
             </div>
             <div className="device-item-info">
-              <div className="device-item-name">mac book</div>
-              <div className='device-item-device_name'>full cavin</div>
-            </div>
-          </div>
-          <div className="device-item-files">
-            <div className="device-file-container">
-              <div className="file-info">
-                <div className="file-info-item">
-                  <div className="file-icon"><UnkownIcon /></div>
-                  <div className="file-name">sdsdsadasdsadsadsadsadsa.ext</div>
-                </div>
-                <div className="file-status-content">
-                  <div className="file-status-icon">
-                    <PendingIcon />
-                  </div>
-                  <div className="file-status-box">
-                    <div className="file-status-title">等待对方接收</div>
-                    <div className="file-status-desc">等待对方设备链接接收</div>
-                  </div>
-                  <div className="file-remove"><DeleteIcon /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className={['device-item'].join(' ')}>
-          <div className="device-item-content">
-            <div className="device-item__icon">
-              <img src={MacIcon} alt="icon" />
-              {/* <span className='device-status' style={{ backgroundColor: data.color }}></span> */}
-            </div>
-            <div className="device-item-info">
-              <div className="device-item-name">mac book</div>
-              <div className='device-item-device_name'>full cavin</div>
+              <div className="device-item-name">{{item.fullname}}</div>
+              <div className='device-item-device_name'>{{item.device_name}}</div>
             </div>
           </div>
           <div className="device-item-files">
@@ -61,8 +63,12 @@ function recever() {
                 </div>
                 <div className="file-save-info">
                   <div className="file-save-info__icon">
-                    <FloderIcon />
-                    <span>Downloads</span>
+                    <Dropdown menu={{ items }}>
+                      <Space>
+                        <FloderIcon />
+                        <span>Downloads</span>
+                      </Space>
+                    </Dropdown>
                   </div>
                   <div className="file-total-size">
                     <WifiIcon />
@@ -77,6 +83,8 @@ function recever() {
             </div>
           </div>
         </div>
+        })}
+
       </div>
     </div>
   )

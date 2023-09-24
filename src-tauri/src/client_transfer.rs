@@ -20,10 +20,12 @@ struct FileInfoItem {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct SendFileInfo {
+  id: String,
   ip: String,
+  fullname: String,
+  device_name: String,
   port: u32,
   files: Vec<FileInfoItem>,
-  id: String
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -114,12 +116,14 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
           println!("连接到目标设备失败: {}", e);
           return Err(e.to_string());
       }
-  };
+    };
 
     // 发送确认消息
     let file_info = SendFileInfo {
       id: "aaa".to_string(),
       ip: "127.0.0.1".to_string(),
+      fullname: "cavin-ssss".to_string(),
+      device_name: "cavin-aaaa".to_string(),
       port: 16008,
       files: vec![
         FileInfoItem {
