@@ -62,10 +62,10 @@ pub fn init_tcplistener() {
     println!("监听地址: {}", listener.local_addr().unwrap());
     println!("监听端口: {}", CLIENT_PORT);
 
-    while let Ok((client_socket, _)) = listener.accept().await {
+    while let Ok((mut client_socket, _)) = listener.accept().await {
       tokio::spawn(async move {
         // 单独处理每个客户端连接
-        handle_client(client_socket).await;
+        handle_client(&mut client_socket).await;
       });
     };
   });
@@ -74,7 +74,7 @@ pub fn init_tcplistener() {
 /**
  * 处理客户端连接
  */
-async fn handle_client(client_socket: TcpStream) {
+async fn handle_client(client_socket: &mut TcpStream) {
   // 读取确认消息
   let mut confirmation_buf = [0; 1024];
   let _ = client_socket.readable().await;
@@ -83,7 +83,7 @@ async fn handle_client(client_socket: TcpStream) {
     match client_socket.try_read(&mut confirmation_buf) {
       Ok(n) => {
         let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
-        transfer_recever_message(confirmation_msg.to_string());
+        transfer_recever_message(confirmation_msg.to_string(), client_socket).await;
         // println!("接收到确认消息: {}", confirmation_msg);
         // client_socket.shutdown().await.expect("关闭连接失败");
       },
@@ -92,12 +92,12 @@ async fn handle_client(client_socket: TcpStream) {
         return;
       }
     }
-  }
+  };
 }
 /**
  * 处理接收到的确认消息
  */
-fn transfer_recever_message(message: String) {
+async fn transfer_recever_message(message: String, client_socket: &mut TcpStream) {
   println!("接收到确认消息222: {}", message);
   let message = serde_json::from_str::<SendMessage<Value>>(&message);
   let window = get_global_window();
@@ -110,6 +110,31 @@ fn transfer_recever_message(message: String) {
           .expect("解析 SendFileInfo 失败");
           window.emit::<SendFileInfo>("anyDrop://send_file_confirmation", send_file_info.clone()).expect("发送确认消息失败");
           println!("接收到确认消息: {:?}", send_file_info.clone());
+        },
+        "send_current_file" => {
+          let send_current_file_info = serde_json::from_value::<FileInfoItem>(parse_message.playload.clone()).expect("解析 FileInfoItem 失败");
+          let f = File::create(send_current_file_info.path.clone()).await.expect("创建文件失败");
+          let mut reader = client_socket;
+          let mut writer = f;
+
+          let result = tokio::io::copy(&mut reader, &mut writer).await;
+
+          match result {
+            Ok(transferred) => {
+              let _ = window
+                  .emit("fileTransferProgress", SendFileProgress {
+                    file_path: send_current_file_info.path.to_string(),
+                    progress: Progress {
+                      total: send_current_file_info.size,
+                      transferred: transferred
+                    }
+                  });
+            }
+            Err(err) => {
+              // Handle error
+              println!("Error: {}", err);
+            }
+          }
         },
         "reject" => {
           let reject_file_info = serde_json::from_value::<RejectFileMessage>(parse_message.playload.clone()).expect("解析 RejectFileMessage 失败");
@@ -164,7 +189,7 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
     // let send_message_value = serde_json::to_value(&send_message).unwrap();
     let send_mesage_string = serde_json::to_string(&send_message).unwrap();
     let confirmation_msg = send_mesage_string.as_bytes();
-    let _ = target_socket.writable().await;
+    // let _ = target_socket.writable().await;
 
     if target_socket.writable().await.is_ok() {
       match target_socket.try_write(confirmation_msg) {
@@ -173,7 +198,21 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
           let mut i = 0;
           while i < file_info.clone().files.len()  {
             let file_path = file_info.clone().files[i].path.clone();
-            let _ = start_file_transfer(&file_path, &mut target_socket).await;
+            let send_current_file_message = SendMessage {
+              msg_type: "send_current_file".to_string(),
+              playload: file_info.clone().files[i].clone()
+            };
+            let send_message_string = serde_json::to_string(&send_current_file_message).unwrap();
+            match target_socket.try_write(send_message_string.as_bytes()) {
+              Ok(_) => {
+                println!("发送当前文件消息成功");
+                let _ = start_file_transfer(&file_path, &mut target_socket).await;
+              },
+              Err(e) => {
+                println!("发送当前文件消息失败: {}", e);
+                return Err(e.to_string());
+              }
+            }
             i += 1;
           }
           target_socket.shutdown().await.expect("关闭连接失败");
