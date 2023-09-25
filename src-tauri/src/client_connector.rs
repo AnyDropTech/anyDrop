@@ -1,12 +1,11 @@
 //! Service daemon for mDNS Service Discovery.
-use std::time::Duration;
 use std::{net::Ipv4Addr, collections::HashSet};
 use std::collections::HashMap;
 
 use mdns_sd::{ServiceInfo, ServiceDaemon, TxtProperties, ServiceEvent};
 use serde_json::Value;
 
-use crate::global_constants::{get_global_client_config, get_global_window};
+use crate::client_global::{get_global_client_config, get_global_window};
 use crate::{error::Result, client_config::{SERVICE_TYPE, PORT}};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

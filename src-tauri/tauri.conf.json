@@ -54,10 +54,10 @@
       {
         "label": "main",
         "fullscreen": false,
-        "height": 600,
+        "height": 736,
+        "width": 414,
         "resizable": true,
         "title": "taruri-app",
-        "width": 800,
         "fileDropEnabled": true,
         "center": true
       }

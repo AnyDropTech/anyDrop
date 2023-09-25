@@ -1,19 +1,22 @@
 
-mod client_command;
 pub mod error;
+pub mod utils;
+pub mod client_global;
 pub mod client_config;
 pub mod client_connector;
-pub mod global_constants;
-pub mod utils;
-mod client_transfer;
+pub mod client_send_recevier;
+mod client_command;
+
+use tauri::Manager;
 
 use client_config::ClientConfig;
 use client_connector::init_client_connector;
-use client_transfer::{init_tcplistener, select_send_dir, select_send_file, send_file_confirmation};
-use global_constants::{set_global_window, set_app_handle, set_global_client_config, init_client_config, save_client_config};
-use tauri::Manager;
+use client_global::{set_global_window, set_app_handle, set_global_client_config};
+use client_send_recevier::{init_tcplistener, select_send_dir, select_send_file, send_file_confirmation};
 
 use client_command::{locale_ip, select_target_save_dir};
+
+use crate::client_global::{init_client_config, save_client_config};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

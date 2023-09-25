@@ -1,15 +1,13 @@
 //! Service daemon for client transfer.
-
 use std::{path::PathBuf, net::SocketAddr};
-
-pub use anyhow::Result as AResult;
-use crate::global_constants::get_global_window;
 use rfd::FileDialog;
+use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use tokio::{net::{TcpListener, TcpStream}, io::AsyncWriteExt};
+use tokio::{net::{TcpListener, TcpStream}, io::AsyncWriteExt, sync::mpsc, fs::File};
+
+use crate::client_global::get_global_window;
 
 pub const CLIENT_PORT: u32 = 16008;
-
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct FileInfoItem {
@@ -34,7 +32,24 @@ struct SendMessage <S>{
   playload: S
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Progress {
+    total: u64,
+    transferred: u64,
+}
 
+impl Progress {
+    fn new(total: u64) -> Self {
+        Self {
+            total,
+            transferred: 0,
+        }
+    }
+
+    fn update(&mut self, transferred: u64) {
+        self.transferred = transferred;
+    }
+}
 
 /**
  * 初始化tcp监听器
@@ -137,13 +152,14 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
         FileInfoItem {
           name: "test.txt".to_string(),
           size: 1024,
-          path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string()
+          // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
+          path: "/Users/cavinhuang/Downloads/柜号：CXDU2215797=COSU8042581812 报关清单 920件_拆分表 (2).xlsx".to_string()
         }
       ]
     };
     let send_message = SendMessage {
       msg_type: "confirm".to_string(),
-      playload: file_info
+      playload: file_info.clone()
     };
     // let send_message_value = serde_json::to_value(&send_message).unwrap();
     let send_mesage_string = serde_json::to_string(&send_message).unwrap();
@@ -154,6 +170,12 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
       match target_socket.try_write(confirmation_msg) {
         Ok(_) => {
           println!("发送确认消息成功");
+          let mut i = 0;
+          while i < file_info.clone().files.len()  {
+            let file_path = file_info.clone().files[i].path.clone();
+            let _ = start_file_transfer(&file_path, &mut target_socket).await;
+            i += 1;
+          }
           target_socket.shutdown().await.expect("关闭连接失败");
         },
         Err(e) => {
@@ -223,7 +245,56 @@ pub async fn reject_file_confirmation(source_ip: &str, source_fullname: &str, ta
   Ok(())
 }
 
-fn send_file_service(client_socket: TcpStream, files: &Vec<FileInfoItem>) {}
+fn send_file_service(client_socket: TcpStream, files: &Vec<FileInfoItem>) {
+
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct SendFileProgress {
+  file_path: String,
+  progress: Progress
+}
+
+async fn start_file_transfer(
+  file_path: &String,
+  client_socket: &mut TcpStream
+) -> Result<(), String> {
+  let file_size = std::fs::metadata(file_path).unwrap().len();
+
+  let (progress_sender, mut progress_receiver) = mpsc::channel::<Progress>(32);
+
+  let file_path_owned = file_path.to_owned();
+
+  let file = File::open(file_path_owned).await.expect("Failed to open file");
+  let mut progress = Progress::new(file_size);
+
+  let mut reader = file;
+  let mut writer = client_socket;
+
+  let result = tokio::io::copy(&mut reader, &mut writer).await;
+  match result {
+    Ok(transferred) => {
+      progress.update(transferred);
+      let _ = progress_sender.send(progress.clone()).await;
+    }
+    Err(err) => {
+      // Handle error
+      println!("Error: {}", err);
+    }
+  }
+
+  while let Some(updated_progress) = progress_receiver.recv().await {
+    let window = get_global_window();
+      let _ = window
+          .emit("fileTransferProgress", SendFileProgress {
+            file_path: file_path.to_string(),
+            progress: updated_progress
+          });
+  }
+
+  Ok(())
+}
+
 
 /**
  * 选择发送文件
