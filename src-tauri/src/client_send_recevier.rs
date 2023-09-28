@@ -86,15 +86,13 @@ pub fn init_tcplistener() {
 async fn handle_client_file(file_name: String, client_socket_file: &mut TcpStream) {
   let f = File::create(file_name.clone()).await.unwrap();
   let mut writer = BufWriter::new(f);
-  if client_socket_file.writable().await.is_ok() {
-    match tokio::io::copy(client_socket_file, &mut writer).await {
-      Ok(_) => {
-        println!("接收文件成功");
-      },
-      Err(err) => {
-        // 处理错误
-        println!("Error: {:?}", err);
-      }
+  match tokio::io::copy(client_socket_file, &mut writer).await {
+    Ok(_) => {
+      println!("接收文件成功");
+    },
+    Err(err) => {
+      // 处理错误
+      println!("Error: {:?}", err);
     }
   }
 }
@@ -116,7 +114,7 @@ async fn handle_client(client_socket: &mut TcpStream, client_socket_file: &mut T
         println!("读取确认消息失败: {}", e);
       }
     }
-    sleep(Duration::from_secs(5)).await;
+    sleep(Duration::from_millis(200)).await;
   };
 }
 
@@ -159,6 +157,8 @@ async fn transfer_recever_message(message: String, client_socket: &mut TcpStream
             let file_name = file_info.path.clone();
 
             transfer_file(client_socket_file, file_name).await;
+
+            sleep(Duration::from_millis(200)).await;
           }
         },
         "send_current_file" => {
@@ -204,83 +204,89 @@ async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
  */
 #[tauri::command]
 pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
-    // 连接到目标设备
-    let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
-    // let mut target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
-    let mut target_socket = match TcpStream::connect(target_addr).await {
-      Ok(socket) => socket,
-      Err(e) => {
-          println!("连接到目标设备失败: {}", e);
-          return Err(e.to_string());
+  // 连接到目标设备
+  let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
+  // let mut target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
+  let mut target_socket = match TcpStream::connect(target_addr).await {
+    Ok(socket) => socket,
+    Err(e) => {
+        println!("连接到目标设备失败: {}", e);
+        return Err(e.to_string());
+    }
+  };
+
+  let target_addr_file: SocketAddr = format!("{target_ip}:{CLIENT_FILE_PORT}").parse().expect("目标设备地址解析失败");
+  let mut target_socket_file = match TcpStream::connect(target_addr_file).await {
+    Ok(socket) => socket,
+    Err(e) => {
+        println!("连接到目标设备失败: {}", e);
+        return Err(e.to_string());
+    }
+  };
+
+  // 发送确认消息
+  let file_info = SendFileInfo {
+    id: "aaa".to_string(),
+    ip: "127.0.0.1".to_string(),
+    fullname: "cavin-ssss".to_string(),
+    device_name: "cavin-aaaa".to_string(),
+    port: 16008,
+    files: vec![
+      FileInfoItem {
+        name: "test.txt".to_string(),
+        size: 1024,
+        // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
+        path: "/Users/cavinhuang/Downloads/20230921-144908.jpeg".to_string()
+      },
+      FileInfoItem {
+        name: "test2.txt".to_string(),
+        size: 1024,
+        // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
+        path: "/Users/cavinhuang/Downloads/使用说明.txt".to_string()
       }
-    };
+    ]
+  };
+  let send_message = SendMessage {
+    msg_type: "confirm".to_string(),
+    playload: file_info.clone()
+  };
+  // let send_message_value = serde_json::to_value(&send_message).unwrap();
+  let send_mesage_string = serde_json::to_string(&send_message).unwrap();
+  let confirmation_msg = send_mesage_string.as_bytes();
+  // let _ = target_socket.writable().await;
 
-    let target_addr_file: SocketAddr = format!("{target_ip}:{CLIENT_FILE_PORT}").parse().expect("目标设备地址解析失败");
-    let mut target_socket_file = match TcpStream::connect(target_addr_file).await {
-      Ok(socket) => socket,
-      Err(e) => {
-          println!("连接到目标设备失败: {}", e);
-          return Err(e.to_string());
-      }
-    };
-
-    // 发送确认消息
-    let file_info = SendFileInfo {
-      id: "aaa".to_string(),
-      ip: "127.0.0.1".to_string(),
-      fullname: "cavin-ssss".to_string(),
-      device_name: "cavin-aaaa".to_string(),
-      port: 16008,
-      files: vec![
-        FileInfoItem {
-          name: "test.txt".to_string(),
-          size: 1024,
-          // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
-          path: "/Users/cavinhuang/Downloads/20230921-144908.jpeg".to_string()
-        }
-      ]
-    };
-    let send_message = SendMessage {
-      msg_type: "confirm".to_string(),
-      playload: file_info.clone()
-    };
-    // let send_message_value = serde_json::to_value(&send_message).unwrap();
-    let send_mesage_string = serde_json::to_string(&send_message).unwrap();
-    let confirmation_msg = send_mesage_string.as_bytes();
-    // let _ = target_socket.writable().await;
-
-    if target_socket.writable().await.is_ok() {
-      match target_socket.try_write(confirmation_msg) {
-        Ok(_) => {
-          println!("发送确认消息成功");
-          // target_socket.shutdown().await.expect("关闭连接失败");
-          if target_socket.readable().await.is_ok() {
-            let mut confirmation_buf = [0; 2048];
-            match target_socket.try_read(&mut confirmation_buf) {
-              Ok(n) => {
-                // 拿到返回之后的信息
-                let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
-                println!("接收到ququs消息: {}", confirmation_msg.to_string());
-                transfer_recever_message(confirmation_msg.to_string(), &mut target_socket, &mut target_socket_file).await;
-                // println!("接收到确认消息: {}", confirmation_msg);
-                // client_socket.shutdown().await.expect("关闭连接失败");
-              },
-              Err(e) => {
-                println!("读取确认消息失败: {}", e);
-                return Err(e.to_string());
-              }
+  if target_socket.writable().await.is_ok() {
+    match target_socket.try_write(confirmation_msg) {
+      Ok(_) => {
+        println!("发送确认消息成功");
+        // target_socket.shutdown().await.expect("关闭连接失败");
+        if target_socket.readable().await.is_ok() {
+          let mut confirmation_buf = [0; 2048];
+          match target_socket.try_read(&mut confirmation_buf) {
+            Ok(n) => {
+              // 拿到返回之后的信息
+              let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
+              println!("接收到ququs消息: {}", confirmation_msg.to_string());
+              transfer_recever_message(confirmation_msg.to_string(), &mut target_socket, &mut target_socket_file).await;
+              // println!("接收到确认消息: {}", confirmation_msg);
+              // client_socket.shutdown().await.expect("关闭连接失败");
+            },
+            Err(e) => {
+              println!("读取确认消息失败: {}", e);
+              return Err(e.to_string());
             }
           }
-        },
-        Err(e) => {
-          println!("发送确认消息失败: {}", e);
-          return Err(e.to_string());
         }
+      },
+      Err(e) => {
+        println!("发送确认消息失败: {}", e);
+        return Err(e.to_string());
       }
     }
-    // drop(target_socket);
-    // target_socket.write_all(confirmation_msg).await.map_err(|e| e.to_string())?;
-    Ok(())
+  }
+  // drop(target_socket);
+  // target_socket.write_all(confirmation_msg).await.map_err(|e| e.to_string())?;
+  Ok(())
 }
 
 /**
