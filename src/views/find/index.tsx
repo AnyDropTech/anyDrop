@@ -135,7 +135,6 @@ function Find() {
   }), [setCurrentFiles, setIsDragOver])
 
   const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
-    console.log('🚀 ~ file: index.tsx:123 ~ handleDiscovery ~ res:', res)
     const deviceLists = res.payload
     const onlineDevices: IQueryRes[] = []
     const offlineDevices: IQueryRes[] = []

@@ -1,14 +1,18 @@
 import { event } from '@tauri-apps/api'
 import { Menu, theme } from 'antd'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
 import { useStore } from '../store'
 import type { ISendFileInfo } from '../types'
+import type { IQueryRes } from '../views/find/types'
 
 import './default.scss'
 
 const turiSendConfirmUri = 'anyDrop://send_file_confirmation'
+enum TAURI_EVENT {
+  DISCOVERY = 'AnyDrop://client_connector_discovery',
+}
 const { useToken } = theme
 
 function DefaultLayout() {
@@ -58,7 +62,20 @@ function DefaultLayout() {
     }
   }
 
-  const { receiveFileInfo } = useStore()
+  const { receiveFileInfo, deviceInfo } = useStore()
+  const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
+    const deviceLists = res.payload
+    const onlineDevices: IQueryRes[] = []
+    const offlineDevices: IQueryRes[] = []
+    deviceLists.forEach((device) => {
+      if (device.offline)
+        offlineDevices.push(device)
+      else
+        onlineDevices.push(device)
+    })
+    deviceInfo.setOnloneList(onlineDevices)
+    deviceInfo.setOfflineList(offlineDevices)
+  }, [deviceInfo])
   useEffect(() => {
     const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, (res) => {
       const fileInfo = res.payload
@@ -69,8 +86,12 @@ function DefaultLayout() {
       }
     })
 
+    // 发现设备
+    const discoveryDestory = event.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
+
     return () => {
       unlisten.then(res => res())
+      discoveryDestory.then(res => res())
     }
   }, [receiveFileInfo])
 
@@ -82,7 +103,8 @@ function DefaultLayout() {
         {/* 侧边栏 */}
         <div className="main-sidebar">
           <div className='main-logo' style={{ background: token.colorBgContainer, color: token.colorPrimaryActive }}>
-            AnyDrop
+            <div>Any</div>
+            <div style={{ marginLeft: '10px' }}>Drop</div>
           </div>
           <Menu
           className='sidebar-menu'

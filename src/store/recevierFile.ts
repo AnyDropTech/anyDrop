@@ -11,13 +11,13 @@ class RecevireFileInfo {
 
   setList = (devices: ISendFileInfo) => {
     this.list.push(devices)
-    localStorage.setItem('devices_list', JSON.stringify(this.list))
+    localStorage.setItem('recevier_file_list', JSON.stringify(this.list))
   }
 
   getList = () => {
     if (this.list.length > 0)
       return this.list
-    const list = localStorage.getItem('devices_list')
+    const list = localStorage.getItem('recevier_file_list')
     if (list)
       this.list = JSON.parse(list)
 
