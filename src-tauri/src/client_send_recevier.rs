@@ -1,9 +1,10 @@
 //! Service daemon for client transfer.
-use std::{path::PathBuf, net::SocketAddr, ptr::copy};
+use std::{path::PathBuf, net::SocketAddr};
 use rfd::FileDialog;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use tokio::{net::{TcpListener, TcpStream}, io::{AsyncWriteExt, BufWriter, AsyncReadExt, BufReader}, sync::mpsc, fs::File, time::{sleep, Duration}};
+use tokio::io::AsyncReadExt;
+use tokio::{net::{TcpListener, TcpStream}, io::{AsyncWriteExt, BufWriter, BufReader}, sync::mpsc, fs::File, time::{sleep, Duration}};
 
 use crate::client_global::get_global_window;
 
@@ -64,60 +65,52 @@ impl Progress {
  */
 pub fn init_tcplistener() {
   let addr = format!("0.0.0.0:{}", CLIENT_PORT);
-  let file_addr = format!("0.0.0.0:{}", CLIENT_FILE_PORT);
+  let addr_file = format!("0.0.0.0:{}", CLIENT_FILE_PORT);
 
   tokio::spawn(async move {
     let listener = TcpListener::bind(&addr).await.expect("监听地址绑定失败");
-    let file_listener = TcpListener::bind(file_addr).await.expect("监听地址绑定失败");
+    let listener_file = TcpListener::bind(&addr_file).await.expect("监听地址绑定失败");
     println!("监听地址: {}", listener.local_addr().unwrap());
     println!("监听端口: {}", CLIENT_PORT);
 
     while let Ok((mut client_socket, _)) = listener.accept().await {
+      let (mut client_socket_file, _) = listener_file.accept().await.unwrap();
       tokio::spawn(async move {
         // 单独处理每个客户端连接
-        handle_client(&mut client_socket).await;
-      });
-    };
-
-    while let Ok((mut file_client_socket, _)) = file_listener.accept().await {
-      tokio::spawn(async move {
-        // 单独处理每个客户端连接
-        handle_file_client(&mut file_client_socket).await;
+        handle_client(&mut client_socket, &mut client_socket_file).await;
       });
     };
   });
 }
 
+async fn handle_client_file(file_name: String, client_socket_file: &mut TcpStream) {
+  let f = File::create(file_name.clone()).await.unwrap();
+  let mut writer = BufWriter::new(f);
+  if client_socket_file.writable().await.is_ok() {
+    match tokio::io::copy(client_socket_file, &mut writer).await {
+      Ok(_) => {
+        println!("接收文件成功");
+      },
+      Err(err) => {
+        // 处理错误
+        println!("Error: {:?}", err);
+      }
+    }
+  }
+}
+
 /**
  * 处理客户端连接
  */
-async fn handle_client(client_socket: &mut TcpStream) {
+async fn handle_client(client_socket: &mut TcpStream, client_socket_file: &mut TcpStream) {
   // 读取确认消息
-  let mut confirmation_buf = [0; 2048];
+  let mut confirmation_buf = [0; 20480];
 
   while client_socket.readable().await.is_ok() {
     match client_socket.try_read(&mut confirmation_buf) {
       Ok(n) => {
         let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
-        transfer_recever_message(confirmation_msg.to_string(), client_socket).await;
-      },
-      Err(e) => {
-        println!("读取确认消息失败: {}", e);
-      }
-    }
-    sleep(Duration::from_secs(5)).await;
-  };
-}
-
-async fn handle_file_client(file_client_socket: &mut TcpStream) {
-  // 读取确认消息
-  let mut confirmation_buf = [0; 2048];
-
-  while file_client_socket.readable().await.is_ok() {
-    match file_client_socket.try_read(&mut confirmation_buf) {
-      Ok(n) => {
-        let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
-        transfer_recever_message(confirmation_msg.to_string(), file_client_socket).await;
+        transfer_recever_message(confirmation_msg.to_string(), client_socket, client_socket_file).await;
       },
       Err(e) => {
         println!("读取确认消息失败: {}", e);
@@ -130,7 +123,7 @@ async fn handle_file_client(file_client_socket: &mut TcpStream) {
 /**
  * 处理接收到的确认消息
  */
-async fn transfer_recever_message(message: String, client_socket: &mut TcpStream) {
+async fn transfer_recever_message(message: String, client_socket: &mut TcpStream, client_socket_file: &mut TcpStream) {
   println!("收到消息: {}", message);
   let json_message = serde_json::from_str::<SendMessage<Value>>(&message);
   let window = get_global_window();
@@ -154,105 +147,24 @@ async fn transfer_recever_message(message: String, client_socket: &mut TcpStream
         "recevier_confirm" => {
           println!("接收到接收者确认消息: {:?}", parse_message.clone());
           let file_info = serde_json::from_value::<SendFileInfo>(parse_message.playload.clone()).unwrap();
-          let mut i = 0;
-          while i < file_info.clone().files.len()  {
-            let send_current_file_message = SendMessage {
+          for file_info in &file_info.files {
+            // 打开文件并读取文件数据
+            let send_current_file = SendMessage {
               msg_type: "send_current_file".to_string(),
-              playload: file_info.clone().files[i].clone()
+              playload: file_info.clone()
             };
-            let send_message_string = serde_json::to_string(&send_current_file_message).unwrap();
-            if client_socket.writable().await.is_ok() {
-              match client_socket.try_write(send_message_string.as_bytes()) {
-                Ok(_) => {
-                  println!("发送当前文件消息成功");
-                  while client_socket.readable().await.is_ok() {
-                    let mut r = [0u8; 8]; //8 byte buffer
-                    client_socket.read(&mut r).await.unwrap();
-                    let confirmation_msg = String::from_utf8_lossy(&r[..]);
-                    if confirmation_msg.to_string() == "confirm" {
-                      println!("接收到确认消息confirm: {}", confirmation_msg.to_string());
-                      let file_path = file_info.clone().files[i].path.clone();
-                      let mut f = File::open(file_path.clone()).await.unwrap();
-                      if client_socket.writable().await.is_ok() {
-                        match tokio::io::copy(&mut f,  client_socket).await {
-                          Ok(_) => {
-                            println!("发送文件成功");
-                            break;
-                          },
-                          Err(err) => {
-                            // Handle error
-                            println!("Error: {:?}", err);
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                Err(e) => {
-                  println!("发送当前文件消息失败: {:?}", e);
-                }
-              }
-            }
+            let buf = serde_json::to_string(&send_current_file).unwrap();
+            let _ = client_socket.try_write(buf.as_bytes());
 
-            i += 1;
-          }
-        },
-        "file_data" => {
-          let file_message = serde_json::from_value::<FileMessage>(parse_message.playload.clone()).unwrap();
-          let file_name = file_message.clone().file_name;
-          let file_data = file_message.clone().file_data;
-          let mut f = File::create(file_name.clone()).await.unwrap();
-          let mut writer = BufWriter::new(f);
-          if client_socket.writable().await.is_ok() {
-            match tokio::io::copy(client_socket, &mut writer).await {
-              Ok(_) => {
-                println!("接收文件成功");
-              },
-              Err(err) => {
-                // Handle error
-                println!("Error: {:?}", err);
-              }
-            }
+            let file_name = file_info.path.clone();
+
+            transfer_file(client_socket_file, file_name).await;
           }
         },
         "send_current_file" => {
-          let send_current_file_info = serde_json::from_value::<FileInfoItem>(parse_message.playload.clone()).expect("解析 FileInfoItem 失败");
-
-          let file_path = send_current_file_info.path.clone();
-          let file_size = std::fs::metadata(file_path.clone()).unwrap().len();
-
-          let _ = client_socket.write_all(b"confirm");
-
-          if client_socket.readable().await.is_ok() {
-            let f = File::create("/Users/cavinhuang/Downloads/使用说明2.txt".to_string()).await.expect("创建文件失败");
-            let mut reader = client_socket;
-            let mut writer = f;
-            let result = tokio::io::copy(&mut reader, &mut writer).await;
-          }
-
-          // // send_current_file_info.path.clone()
-          // let f = File::create("/Users/cavinhuang/Downloads/使用说明2.txt".to_string()).await.expect("创建文件失败");
-          // let mut reader = client_socket;
-          // let mut writer = f;
-
-          // let result = tokio::io::copy(&mut reader, &mut writer).await;
-
-          // match result {
-          //   Ok(transferred) => {
-          //     let _ = window
-          //         .emit("fileTransferProgress", SendFileProgress {
-          //           file_path: send_current_file_info.path.to_string(),
-          //           progress: Progress {
-          //             total: send_current_file_info.size,
-          //             transferred: transferred
-          //           }
-          //         });
-          //   }
-          //   Err(err) => {
-          //     // Handle error
-          //     println!("send_current_file Error: {:?}", err);
-          //   }
-          // }
+          let file_info = serde_json::from_value::<FileInfoItem>(parse_message.playload.clone()).unwrap();
+          let file_name = file_info.path.clone();
+          handle_client_file(file_name, client_socket_file).await;
         },
         "reject" => {
           let reject_file_info = serde_json::from_value::<RejectFileMessage>(parse_message.playload.clone()).expect("解析 RejectFileMessage 失败");
@@ -263,21 +175,26 @@ async fn transfer_recever_message(message: String, client_socket: &mut TcpStream
       }
     },
     Err(e) => {
-      // let messages: Vec<_> = message.split("||").collect();
-      // if messages.len() > 1 {
-      //   let file_name = messages[0];
-      //   let file_data = messages[1];
-
-      //   let f = File::create("/Users/cavinhuang/Downloads/使用说明2.jpeg".to_string()).await.expect("创建文件失败");
-      //   let mut reader = client_socket;
-      //   let mut writer = f;
-
-      //   let result = tokio::io::copy(&mut reader, &mut writer).await;
-
-      // }
-      // println!("============{:?}", messages);
       println!("解析确认消息失败: {:?}", e);
 
+    }
+  }
+}
+
+// 添加文件传输函数
+async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
+  let f = File::open(file_name.clone()).await.unwrap();
+  let mut reader = BufReader::new(f);
+  let mut writer = target_socket;
+  if writer.writable().await.is_ok() {
+    match tokio::io::copy(&mut reader, &mut writer).await {
+      Ok(_) => {
+        println!("发送文件成功");
+      },
+      Err(err) => {
+        // 处理错误
+        println!("Error: {:?}", err);
+      }
     }
   }
 }
@@ -291,6 +208,15 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
     let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
     // let mut target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
     let mut target_socket = match TcpStream::connect(target_addr).await {
+      Ok(socket) => socket,
+      Err(e) => {
+          println!("连接到目标设备失败: {}", e);
+          return Err(e.to_string());
+      }
+    };
+
+    let target_addr_file: SocketAddr = format!("{target_ip}:{CLIENT_FILE_PORT}").parse().expect("目标设备地址解析失败");
+    let mut target_socket_file = match TcpStream::connect(target_addr_file).await {
       Ok(socket) => socket,
       Err(e) => {
           println!("连接到目标设备失败: {}", e);
@@ -335,7 +261,7 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
                 // 拿到返回之后的信息
                 let confirmation_msg = String::from_utf8_lossy(&confirmation_buf[..n]);
                 println!("接收到ququs消息: {}", confirmation_msg.to_string());
-                transfer_recever_message(confirmation_msg.to_string(), &mut target_socket).await;
+                transfer_recever_message(confirmation_msg.to_string(), &mut target_socket, &mut target_socket_file).await;
                 // println!("接收到确认消息: {}", confirmation_msg);
                 // client_socket.shutdown().await.expect("关闭连接失败");
               },
@@ -411,10 +337,6 @@ pub async fn reject_file_confirmation(source_ip: &str, source_fullname: &str, ta
   }
   drop(source_socket);
   Ok(())
-}
-
-fn send_file_service(client_socket: TcpStream, files: &Vec<FileInfoItem>) {
-
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
