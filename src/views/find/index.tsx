@@ -4,10 +4,13 @@ import { metadata } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
 import { Button, Collapse } from 'antd'
 import { memo, useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { throttle } from 'throttle-debounce'
 
 import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 import { WifiIcon } from '../../components/icons/files'
+import { useStore } from '../../store'
+import type { FileInfoItem, ISendFileInfo } from '../../types'
 import { formatFileSize } from '../../utils'
 
 import DeviceList from './DeviceList'
@@ -157,6 +160,35 @@ function Find() {
     pendingFiles.splice(index, 1)
     setPendingFiles([...pendingFiles])
   }
+  const { sendFileInfo } = useStore()
+  const navigate = useNavigate()
+  const handleSendFile = () => {
+    const files = pendingFiles
+    const devices = selectDevice
+
+    const selectFileForDevices: ISendFileInfo[] = devices.map((item) => {
+      return {
+        id: item.id || '',
+        ip: item.ip_addrs[0],
+        fullname: item.fullname,
+        device_name: item.host_name,
+        port: item.port,
+        files: files.map(file => ({
+          name: file.name,
+          size: file.size,
+          ext: file.ext,
+          path: file.name,
+        })) as FileInfoItem[],
+      }
+    })
+
+    selectFileForDevices.forEach((item) => {
+      sendFileInfo.setList(item)
+    })
+    handleClearFiles()
+    setSelectDevice([])
+    navigate('/sender')
+  }
 
   useEffect(() => {
     console.log('mount')
@@ -239,9 +271,11 @@ function Find() {
         <div className="find-footer">
           <div className="total-size">
             <WifiIcon />
-            <span>116b</span>
+            <span>{currentFiles.reduce((pre, cur) => {
+              return pre + Number(cur.size)
+            }, 0)}b</span>
           </div>
-          <Button block type="primary" disabled={pendingFiles.length === 0 || selectDevice.length === 0} className='send-btn'>发&nbsp;&nbsp;&nbsp;&nbsp;送</Button>
+          <Button block type="primary" disabled={pendingFiles.length === 0 || selectDevice.length === 0} className='send-btn' onClick={handleSendFile}>发&nbsp;&nbsp;&nbsp;&nbsp;送</Button>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ export interface IDevice {
 }
 
 export interface IQueryRes {
+  id: string
   data: IDevice
   offline: boolean
   fullname: string

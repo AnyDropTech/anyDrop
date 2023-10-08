@@ -14,7 +14,7 @@ export interface ISendMessage {
 
 export interface FileInfoItem {
   name: string
-  size: number
+  size: string
   path: string
 }
 export interface ISendFileInfo {

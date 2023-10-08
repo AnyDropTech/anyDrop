@@ -2,13 +2,16 @@ import React from 'react'
 
 import DeviceInfo from './device'
 import RecevireFileInfo from './recevierFile'
+import SendFileInfo from './sendFile'
 
 class Store {
   deviceInfo: DeviceInfo
   receiveFileInfo: RecevireFileInfo
+  sendFileInfo: SendFileInfo
   constructor() {
     this.deviceInfo = new DeviceInfo()
     this.receiveFileInfo = new RecevireFileInfo()
+    this.sendFileInfo = new SendFileInfo()
   }
 }
 

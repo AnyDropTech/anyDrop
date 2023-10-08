@@ -3,7 +3,6 @@ use std::{path::PathBuf, net::SocketAddr};
 use rfd::FileDialog;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use tokio::io::AsyncReadExt;
 use tokio::{net::{TcpListener, TcpStream}, io::{AsyncWriteExt, BufWriter, BufReader}, sync::mpsc, fs::File, time::{sleep, Duration}};
 
 use crate::client_global::get_global_window;
@@ -181,6 +180,10 @@ async fn transfer_recever_message(message: String, client_socket: &mut TcpStream
   }
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct TransferDone {
+  file_name: String
+}
 // 添加文件传输函数
 async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
   let f = File::open(file_name.clone()).await.unwrap();
@@ -190,6 +193,8 @@ async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
     match tokio::io::copy(&mut reader, &mut writer).await {
       Ok(_) => {
         println!("发送文件成功");
+        let window = get_global_window();
+        let _ = window.emit("anyDrop://file_transfer_done", TransferDone { file_name });
       },
       Err(err) => {
         // 处理错误
