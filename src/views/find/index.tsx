@@ -9,6 +9,7 @@ import { throttle } from 'throttle-debounce'
 
 import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 import { WifiIcon } from '../../components/icons/files'
+import { useDiscoverDevices } from '../../hooks'
 import { useStore } from '../../store'
 import type { FileInfoItem, ISendFileInfo } from '../../types'
 import { formatFileSize } from '../../utils'
@@ -42,6 +43,9 @@ async function getFileInfo(paths: string[]) {
 function Find() {
   const [onlineDevices, setOnlineDevices] = useState<IQueryRes[]>([])
   const [offlineDevices, setOfflineDevices] = useState<IQueryRes[]>([])
+
+  const { removeAll, addAll, getAll } = useDiscoverDevices()
+
   const [isActive, setIsActive] = useState(false)
   let timer: null | number = null
   const handleDragMouseOver = () => {
@@ -138,6 +142,7 @@ function Find() {
   }), [setCurrentFiles, setIsDragOver])
 
   const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
+    console.log('🚀 ~ file: index.tsx:141 ~ handleDiscovery ~ res:', res)
     const deviceLists = res.payload
     const onlineDevices: IQueryRes[] = []
     const offlineDevices: IQueryRes[] = []
@@ -149,6 +154,9 @@ function Find() {
     })
     setOnlineDevices(onlineDevices)
     setOfflineDevices(offlineDevices)
+
+    removeAll()
+    addAll(deviceLists)
   }, [setOnlineDevices, setOfflineDevices])
 
   const handleClearFiles = () => {
@@ -195,6 +203,13 @@ function Find() {
     const dropDestory = tauriEvent.listen<string[]>('tauri://file-drop', handleFileDrop)
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
+
+    // 获取缓存的设备列表
+    getAll().then((res) => {
+      console.log('🚀 ~ file: index.tsx:209 ~ getAll ~ res:', res)
+      const data = (res || []) as unknown as IQueryRes[]
+      handleDiscovery({ payload: data, event: '', windowLabel: '', id: 0 })
+    })
 
     // 发现设备
     const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)

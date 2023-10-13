@@ -10,7 +10,7 @@ addRxPlugin(RxDBQueryBuilderPlugin)
 
 export async function anyDropDatabase() {
   const db = await createRxDatabase({
-    name: 'reactrxdb',
+    name: 'anydroprxdb',
     storage: getRxStorageDexie(),
     ignoreDuplicate: true,
   })
@@ -41,6 +41,56 @@ export async function anyDropDatabase() {
           },
         },
         required: ['uid', 'title', 'content'],
+      },
+    },
+  })
+
+  await db.addCollections({
+    discoverdevices: {
+      schema: {
+        title: 'discoverdevices',
+        version: 0,
+        type: 'object',
+        primaryKey: 'id',
+        properties: {
+          id: {
+            type: 'string',
+            maxLength: 250,
+          },
+          fullname: {
+            type: 'string',
+          },
+          hostname: {
+            type: 'string',
+          },
+          offline: {
+            type: 'boolean',
+          },
+          ip_addrs: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+          data: {
+            type: 'object',
+            items: {
+              type: 'object',
+              properties: {
+                device_name: {
+                  type: 'string',
+                },
+                nickname: {
+                  type: 'string',
+                },
+                password: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+        required: ['uid', 'fullname', 'offline', 'data.device_name', 'data.nickname', 'data.password'],
       },
     },
   })
