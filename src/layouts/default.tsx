@@ -84,21 +84,23 @@ function DefaultLayout() {
     }
   }, [deviceInfo, addAll, removeAll])
 
+  const { addRecevicerInfo } = useReceviderInfos()
+
   const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
     const deviceLists = res.payload
     handleSetDevices(deviceLists, false)
   }, [deviceInfo, handleSetDevices])
 
-  const { addRecevicerInfo } = useReceviderInfos()
+  const handleSendFile = useCallback<event.EventCallback<ISendFileInfo>>((res) => {
+    const fileInfo = res.payload
+    if (fileInfo) {
+      addRecevicerInfo(fileInfo)
+      navigate('/recever')
+    }
+  }, [receiveFileInfo, navigate])
+
   useEffect(() => {
-    const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, (res) => {
-      const fileInfo = res.payload
-      if (fileInfo) {
-        receiveFileInfo.setList(fileInfo)
-        addRecevicerInfo(fileInfo)
-        navigate('/recever')
-      }
-    })
+    const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, handleSendFile)
     console.log('default layput mounted')
 
     // 发现设备
@@ -108,7 +110,7 @@ function DefaultLayout() {
       unlisten.then(res => res())
       discoveryDestory.then(res => res())
     }
-  }, [receiveFileInfo, addRecevicerInfo, navigate, handleDiscovery, TAURI_EVENT])
+  }, [handleSendFile, handleDiscovery])
 
   return (
     <div className='page'>

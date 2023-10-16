@@ -26,7 +26,7 @@ export function useDiscoverDevices() {
   const { result: discoverDevices } = useRxData<DiscoverDevices>('discoverdevices', collection =>
     collection.find(),
   )
-  const collection = useRxCollection('discoverdevices')
+  const collection = useRxCollection<DiscoverDevices>('discoverdevices')
 
   const addDiscoveryDevice = async (data: discoverDevicesForm) => {
     await collection?.insert({

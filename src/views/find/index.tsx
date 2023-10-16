@@ -3,7 +3,7 @@ import * as tauriPath from '@tauri-apps/api/path'
 import { metadata } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
 import { Button, Collapse } from 'antd'
-import { memo, useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { throttle } from 'throttle-debounce'
 
@@ -81,16 +81,16 @@ function Find() {
     {
       key: 'online',
       label: '在线设备',
-      children: <DeviceList listData={onlineDevices} checkSelected={handleCheckSelected} setSelectDevice={handleSelectItem}/>,
+      children: <DeviceList listData={useMemo(() => onlineDevices, [onlineDevices])} checkSelected={handleCheckSelected} setSelectDevice={handleSelectItem}/>,
     },
     {
       key: 'offline',
       label: '离线设备',
-      children: <DeviceList listData={offlineDevices} />,
+      children: <DeviceList listData={useMemo(() => offlineDevices, [offlineDevices])} />,
     },
   ]
 
-  const List: React.FC = () => <Collapse defaultActiveKey={['online']} ghost items={items} />
+  const List = memo(() => <Collapse defaultActiveKey={['online']} ghost items={items} />)
 
   const [isDragOver, setIsDragOver] = useState(false)
   const [currentFiles, setCurrentFiles] = useState<Array<IFileItem>>([])
@@ -142,16 +142,16 @@ function Find() {
   }), [setCurrentFiles, setIsDragOver])
 
   const handleSaveDevices = useCallback((deviceLists: IQueryRes[] = []) => {
-    const onlineDevices: IQueryRes[] = []
-    const offlineDevices: IQueryRes[] = []
+    const _onlineDevices: IQueryRes[] = []
+    const _offlineDevices: IQueryRes[] = []
     deviceLists.forEach((device) => {
       if (device.offline)
-        offlineDevices.push(device)
+        _offlineDevices.push(device)
       else
-        onlineDevices.push(device)
+        _onlineDevices.push(device)
     })
-    setOnlineDevices(onlineDevices)
-    setOfflineDevices(offlineDevices)
+    setOnlineDevices(_onlineDevices)
+    setOfflineDevices(_offlineDevices)
   }, [setOnlineDevices, setOfflineDevices])
 
   const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
@@ -209,11 +209,12 @@ function Find() {
     navigate('/sender')
   }
   // 获取缓存的设备列表
-  const getCacheDevices = useCallback(async () => {
-    const res = await getAll()
-    const data = (res || []) as unknown as IQueryRes[]
-    if (data.length)
-      handleSaveDevices(data)
+  const getCacheDevices = useCallback(() => {
+    getAll().then((res) => {
+      const data = (res || []) as unknown as IQueryRes[]
+      if (data.length)
+        handleSaveDevices(data)
+    })
   }, [getAll, handleSaveDevices])
 
   useEffect(() => {
@@ -222,11 +223,11 @@ function Find() {
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
 
-    // 获取缓存的设备列表
-    getCacheDevices()
-
     // 发现设备
     const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
+
+    // 获取缓存的设备列表
+    // getCacheDevices()
 
     return () => {
       console.log('unmount')
@@ -235,7 +236,7 @@ function Find() {
       dropHoverCancelDestory.then(destory => destory())
       discoveryDestory.then(destory => destory())
     }
-  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleDiscovery, TAURI_EVENT, getCacheDevices])
+  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleDiscovery])
 
   const DropUi = memo(() => {
     return (

@@ -1,5 +1,6 @@
 import { addRxPlugin, createRxDatabase, removeRxDatabase } from 'rxdb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
+import { RxDBMigrationPlugin } from 'rxdb/plugins/migration'
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 
@@ -7,6 +8,8 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 addRxPlugin(RxDBDevModePlugin)
 // 查询构建器
 addRxPlugin(RxDBQueryBuilderPlugin)
+// 迁移
+addRxPlugin(RxDBMigrationPlugin)
 
 export async function anyDropDatabase() {
   removeRxDatabase('anydroprxdb', getRxStorageDexie())
