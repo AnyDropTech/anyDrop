@@ -69,6 +69,7 @@
     "lint-staged": "^14.0.1",
     "sass": "^1.66.1",
     "typescript": "^5.2.2",
+    "unocss": "^0.56.5",
     "vite": "^4.4.5"
   },
   "lint-staged": {

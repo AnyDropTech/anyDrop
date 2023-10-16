@@ -1,4 +1,5 @@
-import { ConfigProvider } from 'antd'
+import { getCurrent } from '@tauri-apps/plugin-window'
+import { ConfigProvider, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
@@ -16,15 +17,23 @@ import { anyDropDatabase } from './model'
 
 import './App.css'
 
+const currentWindow = getCurrent()
+
 function App() {
   const [db, setDb] = useState<RxDatabase>()
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
     anyDropDatabase().then(setDb)
+
+    currentWindow.theme().then((t) => {
+      console.log('currentTheme', t)
+      setCurrentTheme(t || 'light')
+    })
   }, [])
   return (
     <Provider db={db}>
-      <ConfigProvider locale={zhCN}>
+      <ConfigProvider locale={zhCN} theme={{algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
         <BrowserRouter>
           <Routes>
             {/* 布局组件 */}

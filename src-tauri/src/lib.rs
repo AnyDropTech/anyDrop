@@ -23,6 +23,7 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_os::init())
+    .plugin(tauri_plugin_window::init())
     .setup(|app| {
 
       // 设置全局state

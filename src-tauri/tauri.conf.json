@@ -55,9 +55,9 @@
         "label": "main",
         "fullscreen": false,
         "height": 736,
-        "width": 414,
+        "width": 480,
         "resizable": true,
-        "title": "taruri-app",
+        "title": "AnyDrop file transfer",
         "fileDropEnabled": true,
         "center": true
       }
