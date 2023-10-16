@@ -3,6 +3,7 @@ import { Menu, theme } from 'antd'
 import { useCallback, useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
+import { useDiscoverDevices, useReceviderInfos } from '../hooks'
 import { useStore } from '../store'
 import type { ISendFileInfo } from '../types'
 import type { IQueryRes } from '../views/find/types'
@@ -63,8 +64,8 @@ function DefaultLayout() {
   }
 
   const { receiveFileInfo, deviceInfo } = useStore()
-  const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
-    const deviceLists = res.payload
+  const { removeAll, addAll } = useDiscoverDevices()
+  const handleSetDevices = useCallback((deviceLists: IQueryRes[] = [], isQuery: boolean) => {
     const onlineDevices: IQueryRes[] = []
     const offlineDevices: IQueryRes[] = []
     deviceLists.forEach((device) => {
@@ -75,16 +76,30 @@ function DefaultLayout() {
     })
     deviceInfo.setOnloneList(onlineDevices)
     deviceInfo.setOfflineList(offlineDevices)
-  }, [deviceInfo])
+
+    if (!isQuery && deviceLists.length) {
+      removeAll().then(() => {
+        addAll(deviceLists)
+      })
+    }
+  }, [deviceInfo, addAll, removeAll])
+
+  const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
+    const deviceLists = res.payload
+    handleSetDevices(deviceLists, false)
+  }, [deviceInfo, handleSetDevices])
+
+  const { addRecevicerInfo } = useReceviderInfos()
   useEffect(() => {
     const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, (res) => {
       const fileInfo = res.payload
-      console.log(fileInfo)
       if (fileInfo) {
         receiveFileInfo.setList(fileInfo)
+        addRecevicerInfo(fileInfo)
         navigate('/recever')
       }
     })
+    console.log('default layput mounted')
 
     // 发现设备
     const discoveryDestory = event.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
@@ -93,7 +108,7 @@ function DefaultLayout() {
       unlisten.then(res => res())
       discoveryDestory.then(res => res())
     }
-  }, [receiveFileInfo])
+  }, [receiveFileInfo, addRecevicerInfo, navigate, handleDiscovery, TAURI_EVENT])
 
   return (
     <div className='page'>

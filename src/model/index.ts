@@ -1,4 +1,4 @@
-import { addRxPlugin, createRxDatabase } from 'rxdb'
+import { addRxPlugin, createRxDatabase, removeRxDatabase } from 'rxdb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
@@ -9,6 +9,8 @@ addRxPlugin(RxDBDevModePlugin)
 addRxPlugin(RxDBQueryBuilderPlugin)
 
 export async function anyDropDatabase() {
+  removeRxDatabase('anydroprxdb', getRxStorageDexie())
+  removeRxDatabase('reactrxdb', getRxStorageDexie())
   const db = await createRxDatabase({
     name: 'anydroprxdb',
     storage: getRxStorageDexie(),
@@ -90,8 +92,110 @@ export async function anyDropDatabase() {
             },
           },
         },
-        required: ['uid', 'fullname', 'offline', 'data.device_name', 'data.nickname', 'data.password'],
+        required: ['id', 'fullname', 'offline', 'data.device_name', 'data.nickname', 'data.password'],
       },
+    },
+  })
+
+  await db.addCollections({
+    senderinfos: {
+      schema: {
+        title: 'senderinfos',
+        version: 0,
+        type: 'object',
+        primaryKey: 'id',
+        properties: {
+          id: {
+            type: 'string',
+            maxLength: 250,
+          },
+          ip: {
+            type: 'string',
+          },
+          port: {
+            type: 'number',
+          },
+          device_name: {
+            type: 'string',
+          },
+          nickname: {
+            type: 'string',
+          },
+          files: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                },
+                size: {
+                  type: 'string',
+                },
+                path: {
+                  type: 'string',
+                },
+                ext: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+        required: ['id', 'ip', 'port', 'device_name', 'nickname', 'files', 'files.name', 'files.size', 'files.path'],
+      },
+
+    },
+  })
+
+  await db.addCollections({
+    recevierinfos: {
+      schema: {
+        title: 'recevierinfos',
+        version: 0,
+        type: 'object',
+        primaryKey: 'id',
+        properties: {
+          id: {
+            type: 'string',
+            maxLength: 250,
+          },
+          ip: {
+            type: 'string',
+          },
+          port: {
+            type: 'number',
+          },
+          device_name: {
+            type: 'string',
+          },
+          nickname: {
+            type: 'string',
+          },
+          files: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                },
+                size: {
+                  type: 'string',
+                },
+                path: {
+                  type: 'string',
+                },
+                ext: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+        required: ['id', 'ip', 'port', 'device_name', 'nickname', 'files', 'files.name', 'files.size', 'files.path'],
+      },
+
     },
   })
   return db

@@ -20,8 +20,9 @@ class SendFileInfo {
   }
 
   remove = (index: number) => {
-    this.list.splice(index, 1)
+    const item = this.list.splice(index, 1)
     this.saveList(this.list)
+    return item ? item[0] : null
   }
 
   getList = () => {

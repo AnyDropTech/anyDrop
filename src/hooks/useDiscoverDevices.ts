@@ -42,7 +42,11 @@ export function useDiscoverDevices() {
   }
 
   const removeAll = async () => {
-    await collection?.find().remove()
+    const res = await collection?.find({})
+    console.log('🚀 ~ file: useDiscoverDevices.ts:46 ~ removeAll ~ res:', res)
+    const deleteRes = await res?.remove()
+    console.log('🚀 ~ file: useDiscoverDevices.ts:48 ~ removeAll ~ deleteRes:', deleteRes)
+    return deleteRes
   }
 
   const deleteDiscoverDeviceById = async (id: string) => {

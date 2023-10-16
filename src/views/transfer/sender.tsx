@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { DeleteIcon, PendingIcon, UnkownIcon } from '../../components'
+import { useSenderInfos } from '../../hooks'
 import { useStore } from '../../store'
 import type { ISendFileInfo } from '../../types'
 
@@ -10,16 +11,21 @@ import './sender.scss'
 
 function Sender() {
   const { sendFileInfo } = useStore()
+  const { getAll, deleteSenderInfoById } = useSenderInfos()
 
   const [fileList, setFileList] = useState<ISendFileInfo[]>([])
   useEffect(() => {
-    console.log(sendFileInfo)
-    setFileList(sendFileInfo.getList())
-  }, [sendFileInfo])
+    getAll().then((res) => {
+      console.log(res)
+      if (res?.length)
+        setFileList(res)
+    })
+  }, [getAll, setFileList])
 
   const handleDeleteDevice = (index: number) => {
-    sendFileInfo.remove(index)
-    setFileList(sendFileInfo.getList())
+    const item = sendFileInfo.remove(index)
+    if (item)
+      deleteSenderInfoById(item.id)
   }
   return (
 

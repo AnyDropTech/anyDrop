@@ -9,7 +9,7 @@ import { throttle } from 'throttle-debounce'
 
 import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 import { WifiIcon } from '../../components/icons/files'
-import { useDiscoverDevices } from '../../hooks'
+import { useDiscoverDevices, useSenderInfos } from '../../hooks'
 import { useStore } from '../../store'
 import type { FileInfoItem, ISendFileInfo } from '../../types'
 import { formatFileSize } from '../../utils'
@@ -141,9 +141,7 @@ function Find() {
     setCurrentFiles([])
   }), [setCurrentFiles, setIsDragOver])
 
-  const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
-    console.log('🚀 ~ file: index.tsx:141 ~ handleDiscovery ~ res:', res)
-    const deviceLists = res.payload
+  const handleSaveDevices = useCallback((deviceLists: IQueryRes[] = []) => {
     const onlineDevices: IQueryRes[] = []
     const offlineDevices: IQueryRes[] = []
     deviceLists.forEach((device) => {
@@ -154,10 +152,19 @@ function Find() {
     })
     setOnlineDevices(onlineDevices)
     setOfflineDevices(offlineDevices)
-
-    removeAll()
-    addAll(deviceLists)
   }, [setOnlineDevices, setOfflineDevices])
+
+  const handleDiscovery = useCallback<tauriEvent.EventCallback<IQueryRes[]>>((res) => {
+    console.log('🚀 ~ file: index.tsx:141 ~ handleDiscovery ~ res:', res)
+    const deviceLists = res.payload
+    handleSaveDevices(deviceLists)
+    if (deviceLists.length) {
+      console.log('更细了数据')
+      removeAll().then(() => {
+        addAll(deviceLists)
+      })
+    }
+  }, [handleSaveDevices, addAll, removeAll])
 
   const handleClearFiles = () => {
     setPendingFiles([])
@@ -170,6 +177,7 @@ function Find() {
   }
   const { sendFileInfo } = useStore()
   const navigate = useNavigate()
+  const { addAll: senderInfoAddAll } = useSenderInfos()
   const handleSendFile = () => {
     const files = pendingFiles
     const devices = selectDevice
@@ -179,7 +187,7 @@ function Find() {
         id: item.id || '',
         ip: item.ip_addrs[0],
         fullname: item.fullname,
-        device_name: item.host_name,
+        device_name: item.hostname,
         port: item.port,
         files: files.map(file => ({
           name: file.name,
@@ -193,10 +201,20 @@ function Find() {
     selectFileForDevices.forEach((item) => {
       sendFileInfo.setList(item)
     })
+
+    senderInfoAddAll(selectFileForDevices)
+
     handleClearFiles()
     setSelectDevice([])
     navigate('/sender')
   }
+  // 获取缓存的设备列表
+  const getCacheDevices = useCallback(async () => {
+    const res = await getAll()
+    const data = (res || []) as unknown as IQueryRes[]
+    if (data.length)
+      handleSaveDevices(data)
+  }, [getAll, handleSaveDevices])
 
   useEffect(() => {
     console.log('mount')
@@ -205,11 +223,7 @@ function Find() {
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
 
     // 获取缓存的设备列表
-    getAll().then((res) => {
-      console.log('🚀 ~ file: index.tsx:209 ~ getAll ~ res:', res)
-      const data = (res || []) as unknown as IQueryRes[]
-      handleDiscovery({ payload: data, event: '', windowLabel: '', id: 0 })
-    })
+    // getCacheDevices()
 
     // 发现设备
     const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
@@ -221,7 +235,7 @@ function Find() {
       dropHoverCancelDestory.then(destory => destory())
       discoveryDestory.then(destory => destory())
     }
-  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleDiscovery, TAURI_EVENT])
+  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleDiscovery, TAURI_EVENT, getCacheDevices])
 
   const DropUi = memo(() => {
     return (
