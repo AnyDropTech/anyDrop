@@ -223,7 +223,7 @@ function Find() {
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
 
     // 获取缓存的设备列表
-    // getCacheDevices()
+    getCacheDevices()
 
     // 发现设备
     const discoveryDestory = tauriEvent.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
