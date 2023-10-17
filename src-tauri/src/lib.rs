@@ -6,6 +6,7 @@ pub mod client_config;
 pub mod client_connector;
 pub mod client_send_recevier;
 mod client_command;
+mod common_command;
 
 use tauri::Manager;
 
@@ -23,7 +24,6 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_os::init())
-    .plugin(tauri_plugin_window::init())
     .setup(|app| {
 
       // 设置全局state
@@ -46,7 +46,8 @@ pub fn run() {
       select_target_save_dir,
       select_send_dir,
       select_send_file,
-      send_file_confirmation
+      send_file_confirmation,
+      common_command::theme,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
