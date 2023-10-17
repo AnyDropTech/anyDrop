@@ -1,4 +1,3 @@
-import { getCurrent } from '@tauri-apps/plugin-window'
 import { ConfigProvider, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { observer } from 'mobx-react-lite'
@@ -7,6 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import type { RxDatabase } from 'rxdb'
 import { Provider } from 'rxdb-hooks'
 
+import { useTheme } from './hooks/useTheme'
 import DefaultLayout from './layouts/default'
 import Find from './views/find'
 import Setting from './views/setting'
@@ -17,23 +17,17 @@ import { anyDropDatabase } from './model'
 
 import './App.css'
 
-const currentWindow = getCurrent()
-
 function App() {
   const [db, setDb] = useState<RxDatabase>()
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light')
+  // const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light')
+  const { currentTheme } = useTheme()
 
   useEffect(() => {
     anyDropDatabase().then(setDb)
-
-    currentWindow.theme().then((t) => {
-      console.log('currentTheme', t)
-      setCurrentTheme(t || 'light')
-    })
   }, [])
   return (
     <Provider db={db}>
-      <ConfigProvider locale={zhCN} theme={{algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
+      <ConfigProvider locale={zhCN} theme={{ algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
         <BrowserRouter>
           <Routes>
             {/* 布局组件 */}

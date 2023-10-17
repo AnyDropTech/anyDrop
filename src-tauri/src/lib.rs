@@ -47,7 +47,7 @@ pub fn run() {
       select_send_dir,
       select_send_file,
       send_file_confirmation,
-      common_command::theme,
+      common_command::get_current_window_theme,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
