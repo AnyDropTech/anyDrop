@@ -18,7 +18,7 @@ struct FileInfoItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-struct SendFileInfo {
+pub struct SendFileInfo {
   id: String,
   ip: String,
   fullname: String,
@@ -208,7 +208,8 @@ async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
  * 发送文件确认消息
  */
 #[tauri::command]
-pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
+pub async fn send_file_confirmation(sender_info: SendFileInfo) -> Result<(), String> {
+  let target_ip = sender_info.ip.clone();
   // 连接到目标设备
   let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
   // let mut target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
@@ -231,25 +232,26 @@ pub async fn send_file_confirmation(target_ip: &str) -> Result<(), String> {
 
   // 发送确认消息
   let file_info = SendFileInfo {
-    id: "aaa".to_string(),
-    ip: "127.0.0.1".to_string(),
-    fullname: "cavin-ssss".to_string(),
-    device_name: "cavin-aaaa".to_string(),
-    port: 16008,
-    files: vec![
-      FileInfoItem {
-        name: "test.txt".to_string(),
-        size: 1024,
-        // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
-        path: "/Users/cavinhuang/Downloads/20230921-144908.jpeg".to_string()
-      },
-      FileInfoItem {
-        name: "test2.txt".to_string(),
-        size: 1024,
-        // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
-        path: "/Users/cavinhuang/Downloads/使用说明.txt".to_string()
-      }
-    ]
+    id: sender_info.id.clone(),
+    ip: sender_info.ip.clone(),
+    fullname: sender_info.fullname.clone(),
+    device_name: sender_info.device_name.clone(),
+    port: sender_info.port.clone(),
+    // files: vec![
+    //   FileInfoItem {
+    //     name: "test.txt".to_string(),
+    //     size: 1024,
+    //     // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
+    //     path: "/Users/cavinhuang/Downloads/20230921-144908.jpeg".to_string()
+    //   },
+    //   FileInfoItem {
+    //     name: "test2.txt".to_string(),
+    //     size: 1024,
+    //     // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
+    //     path: "/Users/cavinhuang/Downloads/使用说明.txt".to_string()
+    //   }
+    // ]
+    files: sender_info.files.clone()
   };
   let send_message = SendMessage {
     msg_type: "confirm".to_string(),

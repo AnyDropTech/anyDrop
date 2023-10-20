@@ -40,7 +40,7 @@ function DefaultLayout() {
     },
   ]
 
-  const { deviceInfo } = useStore()
+  const { deviceInfo, receiveFileInfo } = useStore()
   const handleSetDevices = useCallback((deviceLists: IQueryRes[] = []) => {
     if (deviceLists.length)
       // insertUnique(deviceLists)
@@ -54,8 +54,10 @@ function DefaultLayout() {
 
   const handleSendFile = useCallback<event.EventCallback<ISendFileInfo>>((res) => {
     const fileInfo = res.payload
+    console.log('🚀 ~ file: default.tsx:58 ~ handleSendFile ~ fileInfo:', fileInfo)
     if (fileInfo) {
       // addRecevicerInfo(fileInfo)
+      receiveFileInfo.insert(fileInfo)
       navigate('/recever')
     }
   }, [])

@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api'
 import * as tauriEvent from '@tauri-apps/api/event'
 import * as tauriPath from '@tauri-apps/api/path'
 import { metadata } from '@tauri-apps/plugin-fs'
@@ -172,8 +173,28 @@ function Find() {
     })
 
     handleClearFiles()
-    setSelectDevice([])
-    navigate('/sender')
+
+    selectDevice.forEach((device) => {
+      invoke('send_file_confirmation', {
+        senderInfo: {
+          id: device.id,
+          ip: device.ip_addrs[0],
+          fullname: device.fullname,
+          device_name: device.hostname,
+          port: device.port,
+          files: files.map(file => ({
+            name: file.name,
+            size: file.size,
+            ext: file.ext,
+            path: file.name,
+          })) as FileInfoItem[],
+        },
+      }).then((res) => {
+        console.log(res)
+        navigate('/sender')
+        setSelectDevice([])
+      })
+    })
   }
 
   useEffect(() => {
