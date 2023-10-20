@@ -1,6 +1,9 @@
+import type { RxDocumentData } from 'rxdb'
 import { useRxCollection, useRxData } from 'rxdb-hooks'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
+
+import { sleep } from '../utils'
 
 const discoverDevicesSchema = z.object({
   id: z.string(),
@@ -23,7 +26,7 @@ export const discoverDevicesFormSchema = discoverDevicesSchema.partial({
 export type discoverDevicesForm = z.infer<typeof discoverDevicesFormSchema>
 
 export function useDiscoverDevices() {
-  const { result: discoverDevices } = useRxData<DiscoverDevices>('discoverdevices', collection =>
+  const { result: discoverDevices, isFetching } = useRxData<DiscoverDevices>('discoverdevices', collection =>
     collection.find(),
   )
   const collection = useRxCollection<DiscoverDevices>('discoverdevices')
@@ -36,9 +39,7 @@ export function useDiscoverDevices() {
   }
 
   const addAll = async (data: discoverDevicesForm[]) => {
-    console.log('inner set', data)
-    for (let i = 0; i < data.length; i++)
-      await addDiscoveryDevice(data[i])
+    return await collection?.bulkInsert(data.map(d => ({ id: uuidv4(), ...d })))
   }
 
   const removeAll = async () => {
@@ -49,14 +50,50 @@ export function useDiscoverDevices() {
     return deleteRes
   }
 
+  const insertUnique = async (data: discoverDevicesForm[]) => {
+    console.log('🚀 ~ file: useDiscoverDevices.ts:52 ~ insertUnique ~ data:', data)
+    await sleep(2000)
+    const res = await collection?.find({
+      selector: {
+        fullname: {
+          $in: data.map(d => d.fullname),
+        },
+      },
+    }).exec()
+    const saveData: discoverDevicesForm[] = []
+    data.forEach((d) => {
+      if (!res?.find(r => r.fullname === d.fullname))
+        saveData.push(d)
+    })
+    console.log('res=>', res)
+    console.log('saveData=>', saveData)
+    if (saveData.length > 0)
+      return await collection?.bulkInsert(saveData.map(d => ({ id: uuidv4(), ...d })))
+  }
+
   const deleteDiscoverDeviceById = async (id: string) => {
     const doc = await collection?.findOne(id)
     await doc?.remove()
   }
 
   const getAll = async () => {
-    return await collection?.find().exec()
+    const res = await collection?.find({
+      selector: {
+        fullname: { $not: '' },
+      },
+    })
+    console.log(collection)
+    return res
   }
 
-  return { discoverDevices, addDiscoveryDevice, removeAll, deleteDiscoverDeviceById, addAll, getAll }
+  const onInsertEvent = (callback: (docData: RxDocumentData<DiscoverDevices>) => void) => {
+    return collection?.insert$.subscribe((event) => {
+      const { documentData } = event
+      callback(documentData)
+    })
+  }
+
+  console.log('🚀 ~ file: useDiscoverDevices.ts:52 ~ insertUnique ~ data:', discoverDevices)
+
+  return { isFetching, discoverDevices, addDiscoveryDevice, removeAll, deleteDiscoverDeviceById, addAll, getAll, insertUnique, onInsertEvent }
 }

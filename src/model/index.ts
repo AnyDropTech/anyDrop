@@ -1,4 +1,5 @@
-import { addRxPlugin, createRxDatabase, removeRxDatabase } from 'rxdb'
+import type { RxDatabase } from 'rxdb'
+import { addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { RxDBMigrationPlugin } from 'rxdb/plugins/migration'
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder'
@@ -11,9 +12,23 @@ addRxPlugin(RxDBQueryBuilderPlugin)
 // 迁移
 addRxPlugin(RxDBMigrationPlugin)
 
-export async function anyDropDatabase() {
-  removeRxDatabase('anydroprxdb', getRxStorageDexie())
-  removeRxDatabase('reactrxdb', getRxStorageDexie())
+let dbPromise: Promise<RxDatabase> | null = null
+
+// 获取所有 IndexedDB 数据库的列表
+// indexedDB.databases().then((databaseNames) => {
+//   // 遍历数据库列表并删除每个数据库
+//   databaseNames.forEach((databaseInfo) => {
+//     const dbName = databaseInfo.name
+//     indexedDB.deleteDatabase(dbName).onsuccess = function () {
+//       console.log(`数据库 ${dbName} 已成功删除`)
+//     }
+//   })
+// }).catch((error) => {
+//   console.error(`获取数据库列表时发生错误: ${error}`)
+// })
+
+async function _create() {
+  // clear all database
   const db = await createRxDatabase({
     name: 'anydroprxdb',
     storage: getRxStorageDexie(),
@@ -202,4 +217,10 @@ export async function anyDropDatabase() {
     },
   })
   return db
+}
+
+export function get() {
+  if (!dbPromise)
+    dbPromise = _create()
+  return dbPromise
 }

@@ -2,6 +2,7 @@ import { event } from '@tauri-apps/api'
 import { Menu, theme } from 'antd'
 import { useCallback, useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { throttle } from 'throttle-debounce'
 
 import { useDiscoverDevices, useReceviderInfos } from '../hooks'
 import { useStore } from '../store'
@@ -63,33 +64,19 @@ function DefaultLayout() {
     }
   }
 
-  const { receiveFileInfo, deviceInfo } = useStore()
-  const { removeAll, addAll } = useDiscoverDevices()
+  const { receiveFileInfo } = useStore()
+  const { insertUnique } = useDiscoverDevices()
   const handleSetDevices = useCallback((deviceLists: IQueryRes[] = [], isQuery: boolean) => {
-    const onlineDevices: IQueryRes[] = []
-    const offlineDevices: IQueryRes[] = []
-    deviceLists.forEach((device) => {
-      if (device.offline)
-        offlineDevices.push(device)
-      else
-        onlineDevices.push(device)
-    })
-    deviceInfo.setOnloneList(onlineDevices)
-    deviceInfo.setOfflineList(offlineDevices)
-
-    if (!isQuery && deviceLists.length) {
-      removeAll().then(() => {
-        addAll(deviceLists)
-      })
-    }
-  }, [deviceInfo, addAll, removeAll])
+    if (!isQuery && deviceLists.length)
+      insertUnique(deviceLists)
+  }, [insertUnique])
 
   const { addRecevicerInfo } = useReceviderInfos()
 
   const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
     const deviceLists = res.payload
     handleSetDevices(deviceLists, false)
-  }, [deviceInfo, handleSetDevices])
+  }, [handleSetDevices])
 
   const handleSendFile = useCallback<event.EventCallback<ISendFileInfo>>((res) => {
     const fileInfo = res.payload
@@ -104,7 +91,7 @@ function DefaultLayout() {
     console.log('default layput mounted')
 
     // 发现设备
-    const discoveryDestory = event.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, handleDiscovery)
+    const discoveryDestory = event.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, throttle(1000, handleDiscovery))
 
     return () => {
       unlisten.then(res => res())
