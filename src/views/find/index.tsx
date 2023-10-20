@@ -3,13 +3,14 @@ import * as tauriPath from '@tauri-apps/api/path'
 import { metadata } from '@tauri-apps/plugin-fs'
 import type { CollapseProps } from 'antd'
 import { Button, Collapse } from 'antd'
+import { computed } from 'mobx'
+import { observer } from 'mobx-react-lite'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { throttle } from 'throttle-debounce'
 
 import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 import { WifiIcon } from '../../components/icons/files'
-import { useDiscoverDevices, useSenderInfos } from '../../hooks'
 import { useStore } from '../../store'
 import type { FileInfoItem, ISendFileInfo } from '../../types'
 import { formatFileSize } from '../../utils'
@@ -17,13 +18,10 @@ import { formatFileSize } from '../../utils'
 import DeviceList from './DeviceList'
 import type { IFileItem } from './fileList'
 import { FileList } from './fileList'
-import type { IDevice, IQueryRes } from './types'
+import type { IQueryRes } from './types'
 
 import './index.scss'
 
-enum TAURI_EVENT {
-  DISCOVERY = 'AnyDrop://client_connector_discovery',
-}
 async function getFileInfo(paths: string[]) {
   const fileInfos: Array<IFileItem> = []
   for (let i = 0; i < paths.length; i++) {
@@ -39,10 +37,9 @@ async function getFileInfo(paths: string[]) {
   return fileInfos
 }
 function Find() {
-  const [onlineDevices, setOnlineDevices] = useState<IQueryRes[]>([])
-  const [offlineDevices, setOfflineDevices] = useState<IQueryRes[]>([])
-
-  const { discoverDevices, onInsertEvent, isFetching } = useDiscoverDevices()
+  const { deviceInfo } = useStore()
+  const onlineDevices = computed(() => deviceInfo.getDevicesList.filter(item => !item.offline)).get()
+  const offlineDevices = computed(() => deviceInfo.getDevicesList.filter(item => item.offline)).get()
 
   const [isActive, setIsActive] = useState(false)
   let timer: null | number = null
@@ -139,26 +136,6 @@ function Find() {
     setCurrentFiles([])
   }), [setCurrentFiles, setIsDragOver])
 
-  const handleSaveDevices = useCallback((deviceLists: IQueryRes[] = []) => {
-    if (onlineDevices.length || offlineDevices.length)
-      return
-    const _onlineDevices: IQueryRes[] = []
-    const _offlineDevices: IQueryRes[] = []
-    deviceLists.forEach((device) => {
-      if (device.offline)
-        _offlineDevices.push(device)
-      else
-        _onlineDevices.push(device)
-    })
-    setOnlineDevices(_onlineDevices)
-    setOfflineDevices(_offlineDevices)
-  }, [setOnlineDevices, setOfflineDevices, onlineDevices, offlineDevices])
-
-  // handleSaveDevices(discoverDevices.map(item => ({
-  //   ...item,
-  //   data: item.data as IDevice,
-  // }) as IQueryRes))
-
   const handleClearFiles = () => {
     setPendingFiles([])
     setCurrentFiles([])
@@ -170,7 +147,6 @@ function Find() {
   }
   const { sendFileInfo } = useStore()
   const navigate = useNavigate()
-  const { addAll: senderInfoAddAll } = useSenderInfos()
   const handleSendFile = () => {
     const files = pendingFiles
     const devices = selectDevice
@@ -192,69 +168,27 @@ function Find() {
     })
 
     selectFileForDevices.forEach((item) => {
-      sendFileInfo.setList(item)
+      sendFileInfo.insert(item)
     })
-
-    senderInfoAddAll(selectFileForDevices)
 
     handleClearFiles()
     setSelectDevice([])
     navigate('/sender')
   }
 
-  const [isFirst, setIsFirst] = useState(true)
   useEffect(() => {
     console.log('mount')
     const dropDestory = tauriEvent.listen<string[]>('tauri://file-drop', handleFileDrop)
     const dropHoverDestory = tauriEvent.listen('tauri://file-drop-hover', handleFileDropHover)
     const dropHoverCancelDestory = tauriEvent.listen('tauri://file-drop-cancelled', handleFileDropCancelled)
 
-    // let timer: null | number = null
-    // if (isFirst) {
-    //   timer = window.setTimeout(() => {
-    //     getAll().then((deviceLists) => {
-    //       console.log('🚀 ~ file: index.tsx:208 ~ getAll ~ deviceLists:', deviceLists)
-    //       handleSaveDevices(deviceLists?.map(item => ({
-    //         ...item,
-    //         data: item.data as IDevice,
-    //       })))
-    //       setIsFirst(false)
-    //     })
-    //   })
-    // }
-    console.log('discoverDevices', discoverDevices, isFirst)
-    handleSaveDevices(discoverDevices.map(item => ({
-      ...item,
-      data: item.data as IDevice,
-    }) as IQueryRes))
-
-    // 获取缓存的设备列表
-    const insertObserver = onInsertEvent((docData) => {
-      console.log('onInsertEvent', docData)
-      const { id, fullname, data, ip_addrs, offline, port } = docData
-      const deviceData = { id, fullname, data: data as IDevice, ip_addrs, offline, port } as IQueryRes
-      if (offline) {
-        const hasDevice = offlineDevices.some(device => device.fullname === fullname)
-        if (!hasDevice)
-          setOfflineDevices([...offlineDevices, deviceData])
-      }
-      else {
-        const hasDevice = onlineDevices.some(device => device.fullname === fullname)
-        if (!hasDevice)
-          setOnlineDevices([...onlineDevices, deviceData])
-      }
-    })
-
     return () => {
       console.log('unmount')
       dropDestory.then(destory => destory())
       dropHoverDestory.then(destory => destory())
       dropHoverCancelDestory.then(destory => destory())
-      insertObserver?.unsubscribe()
-      // timer && clearTimeout(timer)
-      // discoveryDestory.then(destory => destory())
     }
-  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, handleSaveDevices, discoverDevices, onlineDevices, offlineDevices])
+  }, [handleFileDrop, handleFileDropHover, handleFileDropCancelled, onlineDevices, offlineDevices])
 
   const DropUi = memo(() => {
     return (
@@ -314,7 +248,8 @@ function Find() {
                 : <div className={['drag-container', isDragOver ? 'drag-over' : ''].join(' ')}><DropUi /></div>
             }
           </div>
-          {isFetching ? <div className="loading">正在搜索设备...</div> : <List />}
+          {/* {isFetching ? <div className="loading">正在搜索设备...</div> : <List />} */}
+          <List />
         </div>
         <div className="find-footer">
           <div className="total-size">
@@ -329,4 +264,4 @@ function Find() {
     </div>
   )
 }
-export default Find
+export default observer(Find)

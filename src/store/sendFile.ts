@@ -1,38 +1,49 @@
 import { makeAutoObservable } from 'mobx'
+import { isHydrated, makePersistable } from 'mobx-persist-store'
+import { v4 } from 'uuid'
 
 import type { ISendFileInfo } from '../types'
 
 class SendFileInfo {
-  list: ISendFileInfo[] = []
+  senderFileList: ISendFileInfo[] = []
 
   constructor() {
     makeAutoObservable(this)
+    makePersistable(this, {
+      name: 'senderFileList',
+      properties: ['senderFileList'],
+      storage: window.localStorage,
+    })
   }
 
-  setList = (devices: ISendFileInfo) => {
-    this.list.push(devices)
-    this.saveList(this.list)
+  insert(item: ISendFileInfo) {
+    this.senderFileList.push({
+      ...item,
+      id: v4(),
+    })
   }
 
-  saveList = (list: ISendFileInfo[]) => {
-    this.list = list
-    localStorage.setItem('send_file_list', JSON.stringify(this.list))
+  update(id: string, data: Partial<ISendFileInfo>) {
+    const index = this.senderFileList.findIndex(item => item.id === id)
+    if (index !== -1) {
+      this.senderFileList[index] = {
+        ...this.senderFileList[index],
+        ...data,
+      }
+    }
   }
 
   remove = (index: number) => {
-    const item = this.list.splice(index, 1)
-    this.saveList(this.list)
+    const item = this.senderFileList.splice(index, 1)
     return item ? item[0] : null
   }
 
-  getList = () => {
-    if (this.list.length > 0)
-      return this.list
-    const list = localStorage.getItem('send_file_list')
-    if (list)
-      this.list = JSON.parse(list)
+  get getSenderFileList() {
+    return this.senderFileList
+  }
 
-    return this.list
+  get isHydrated() {
+    return isHydrated(this)
   }
 }
 

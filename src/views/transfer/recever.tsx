@@ -1,10 +1,10 @@
 import type { MenuProps } from 'antd'
 import { Button, Dropdown, Space } from 'antd'
-import { useEffect, useState } from 'react'
+import { computed } from 'mobx'
+import { observer } from 'mobx-react-lite'
 
 import { FloderIcon, UnkownIcon, WifiIcon } from '../../components'
 import { useStore } from '../../store'
-import type { ISendFileInfo } from '../../types'
 
 import MacIcon from '../../assets/MacBook.svg'
 
@@ -35,11 +35,8 @@ function recever() {
 
   const { receiveFileInfo } = useStore()
 
-  const [devices, setDevices] = useState<ISendFileInfo[]>([])
+  const devices = computed(() => receiveFileInfo.getRecevierFileList).get()
 
-  useEffect(() => {
-    setDevices(receiveFileInfo.getList())
-  }, [setDevices])
   return (
     <div className="page-transfer">
       <div className="device-list">
@@ -97,4 +94,4 @@ function recever() {
   )
 }
 
-export default recever
+export default observer(recever)

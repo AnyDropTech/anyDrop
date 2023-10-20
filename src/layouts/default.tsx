@@ -1,10 +1,9 @@
 import { event } from '@tauri-apps/api'
 import { Menu, theme } from 'antd'
-import { useCallback, useEffect } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { throttle } from 'throttle-debounce'
 
-import { useDiscoverDevices, useReceviderInfos } from '../hooks'
 import { useStore } from '../store'
 import type { ISendFileInfo } from '../types'
 import type { IQueryRes } from '../views/find/types'
@@ -22,69 +21,47 @@ function DefaultLayout() {
 
   const navigate = useNavigate()
 
-  function navigateTo(path: string) {
-    return navigate(path)
-  }
-
   const sidebarItems = [
     {
-      key: '1',
+      key: '/',
       label: '发现',
     },
     {
-      key: '2',
+      key: '/sender',
       label: '发送',
     },
     {
-      key: '3',
+      key: '/recever',
       label: '接收',
     },
     {
-      key: '4',
+      key: '/setting',
       label: '设置',
     },
   ]
 
-  function handleMenuClick({ key }: any) {
-    switch (key) {
-      case '1':
-        navigateTo('/')
-        break
-      case '2':
-        navigateTo('/sender')
-        break
-      case '3':
-        navigateTo('/recever')
-        break
-      case '4':
-        navigateTo('/setting')
-        break
-      default:
-        break
-    }
-  }
-
-  const { receiveFileInfo } = useStore()
-  const { insertUnique } = useDiscoverDevices()
-  const handleSetDevices = useCallback((deviceLists: IQueryRes[] = [], isQuery: boolean) => {
-    if (!isQuery && deviceLists.length)
-      insertUnique(deviceLists)
-  }, [insertUnique])
-
-  const { addRecevicerInfo } = useReceviderInfos()
+  const { deviceInfo } = useStore()
+  const handleSetDevices = useCallback((deviceLists: IQueryRes[] = []) => {
+    if (deviceLists.length)
+      // insertUnique(deviceLists)
+      deviceInfo.setDevicesList(deviceLists)
+  }, [])
 
   const handleDiscovery = useCallback<event.EventCallback<IQueryRes[]>>((res) => {
     const deviceLists = res.payload
-    handleSetDevices(deviceLists, false)
+    handleSetDevices(deviceLists)
   }, [handleSetDevices])
 
   const handleSendFile = useCallback<event.EventCallback<ISendFileInfo>>((res) => {
     const fileInfo = res.payload
     if (fileInfo) {
-      addRecevicerInfo(fileInfo)
+      // addRecevicerInfo(fileInfo)
       navigate('/recever')
     }
-  }, [receiveFileInfo, navigate])
+  }, [])
+
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([])
+  const { pathname } = useLocation()
 
   useEffect(() => {
     const unlisten = event.listen<ISendFileInfo>(turiSendConfirmUri, handleSendFile)
@@ -93,11 +70,13 @@ function DefaultLayout() {
     // 发现设备
     const discoveryDestory = event.listen<IQueryRes[]>(TAURI_EVENT.DISCOVERY, throttle(1000, handleDiscovery))
 
+    setSelectedKeys([pathname])
+
     return () => {
       unlisten.then(res => res())
       discoveryDestory.then(res => res())
     }
-  }, [handleSendFile, handleDiscovery])
+  }, [handleDiscovery, pathname])
 
   return (
     <div className='page'>
@@ -111,11 +90,14 @@ function DefaultLayout() {
             <div style={{ marginLeft: '10px' }}>Drop</div>
           </div>
           <Menu
-          className='sidebar-menu'
+            className='sidebar-menu'
             mode="vertical"
-            defaultSelectedKeys={['1']}
             items={sidebarItems}
-            onClick={handleMenuClick}
+            onSelect={({ key }) => {
+              navigate(key)
+              setSelectedKeys([key])
+            }}
+            selectedKeys={selectedKeys}
           />
         </div>
         {/* 内容渲染区域 */}

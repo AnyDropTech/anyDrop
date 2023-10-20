@@ -1,4 +1,4 @@
-function transfer () {
+function transfer() {
   return (
     <h1>transfer</h1>
   )

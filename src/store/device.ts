@@ -1,43 +1,32 @@
 import { makeAutoObservable } from 'mobx'
+import { isHydrated, makePersistable } from 'mobx-persist-store'
 
 import type { IQueryRes } from '../views/find/types'
 
 class DeviceInfo {
-  onlineList: IQueryRes[] = []
-  offlineList: IQueryRes[] = []
+  devicesList: IQueryRes[] = []
 
   constructor() {
     makeAutoObservable(this)
+    makePersistable(this, {
+      name: 'DeviceInfo',
+      properties: ['devicesList'],
+      storage: window.localStorage,
+    })
   }
 
-  setOnloneList = (devices: IQueryRes[]) => {
-    this.onlineList = devices
-    localStorage.setItem('devices_online_list', JSON.stringify(this.onlineList))
+  setDevicesList(devicesList: IQueryRes[]) {
+    // console.log('🚀 ~ file: device.ts:18 ~ DeviceInfo ~ setDevicesList ~ devicesList:', devicesList)
+    if (devicesList.length > 0)
+      this.devicesList = devicesList
   }
 
-  setOfflineList = (devices: IQueryRes[]) => {
-    this.offlineList = devices
-    localStorage.setItem('devices_offline_list', JSON.stringify(this.offlineList))
+  get getDevicesList() {
+    return this.devicesList
   }
 
-  getOnlineList = () => {
-    if (this.onlineList.length > 0)
-      return this.onlineList
-    const list = localStorage.getItem('devices_online_list')
-    if (list)
-      this.onlineList = JSON.parse(list)
-
-    return this.onlineList
-  }
-
-  getOfflineList = () => {
-    if (this.offlineList.length > 0)
-      return this.offlineList
-    const list = localStorage.getItem('devices_offline_list')
-    if (list)
-      this.offlineList = JSON.parse(list)
-
-    return this.offlineList
+  get isHydrated() {
+    return isHydrated(this)
   }
 }
 

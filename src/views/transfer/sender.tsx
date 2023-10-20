@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { Empty } from 'antd'
+import { computed } from 'mobx'
+import { observer } from 'mobx-react-lite'
 
 import { DeleteIcon, PendingIcon, UnkownIcon } from '../../components'
-import { useSenderInfos } from '../../hooks'
 import { useStore } from '../../store'
-import type { ISendFileInfo } from '../../types'
 
 import MacIcon from '../../assets/MacBook.svg'
 
@@ -11,28 +11,17 @@ import './sender.scss'
 
 function Sender() {
   const { sendFileInfo } = useStore()
-  const { getAll, deleteSenderInfoById } = useSenderInfos()
 
-  const [fileList, setFileList] = useState<ISendFileInfo[]>([])
-  useEffect(() => {
-    getAll().then((res) => {
-      console.log(res)
-      if (res?.length)
-        setFileList(res)
-    })
-  }, [getAll, setFileList])
+  const senderFileList = computed(() => sendFileInfo.getSenderFileList).get()
 
   const handleDeleteDevice = (index: number) => {
-    const item = sendFileInfo.remove(index)
-    if (item)
-      deleteSenderInfoById(item.id)
+    sendFileInfo.remove(index)
   }
   return (
-
     <div className="page-recever">
       <div className="device-list">
         {
-          fileList.map((item, index) => {
+          senderFileList.map((item, index) => {
             return <div className={['device-item'].join(' ')} key={`sender${index}`}>
             <div className="device-item-content">
               <div className="device-item__icon">
@@ -40,8 +29,8 @@ function Sender() {
                 {/* <span className='device-status' style={{ backgroundColor: data.color }}></span> */}
               </div>
               <div className="device-item-info">
-                <div className="device-item-name">{item.device_name}</div>
-                <div className='device-item-device_name'>{item.fullname}</div>
+                <div className="device-item-name">{item.fullname}</div>
+                <div className='device-item-device_name'>{item.device_name}</div>
               </div>
             </div>
             <div className="device-item-files">
@@ -71,42 +60,22 @@ function Sender() {
           </div>
           })
         }
-
-        <div className={['device-item'].join(' ')}>
-          <div className="device-item-content">
-            <div className="device-item__icon">
-              <img src={MacIcon} alt="icon" />
-              {/* <span className='device-status' style={{ backgroundColor: data.color }}></span> */}
-            </div>
-            <div className="device-item-info">
-              <div className="device-item-name">mac book</div>
-              <div className='device-item-device_name'>full cavin</div>
-            </div>
-          </div>
-          <div className="device-item-files">
-            <div className="device-file-container">
-              <div className="file-info">
-                <div className="file-info-item">
-                  <div className="file-icon"><UnkownIcon /></div>
-                  <div className="file-name">sdsdsadasdsadsadsadsadsa.ext</div>
-                </div>
-                <div className="file-status-content">
-                  <div className="file-status-icon">
-                    <PendingIcon />
-                  </div>
-                  <div className="file-status-box">
-                    <div className="file-status-title">等待对方接收</div>
-                    <div className="file-status-desc">等待对方设备链接接收</div>
-                  </div>
-                  <div className="file-remove"><DeleteIcon /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {
+          senderFileList.length === 0
+            ? <Empty
+          image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+          imageStyle={{ height: 60 }}
+          description={
+            <span>
+              暂无文件
+            </span>
+          }
+        />
+            : null
+        }
       </div>
     </div>
   )
 }
 
-export default Sender
+export default observer(Sender)
