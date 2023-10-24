@@ -1,5 +1,7 @@
 .page-transfer, .page-recever {
   padding: 36px;
+  height: 100%;
+  overflow: auto;
   .device-list {
     display: flex;
     flex-direction: column;

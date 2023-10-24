@@ -1,9 +1,9 @@
 import type { MenuProps } from 'antd'
-import { Button, Dropdown, Space } from 'antd'
+import { Button,Dropdown,Empty,Space } from 'antd'
 import { computed } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
-import { FloderIcon, UnkownIcon, WifiIcon } from '../../components'
+import { FloderIcon,UnkownIcon,WifiIcon } from '../../components'
 import { useStore } from '../../store'
 
 import MacIcon from '../../assets/MacBook.svg'
@@ -89,6 +89,19 @@ function recever() {
             </div>
           )
         })}
+        {
+          devices.length === 0
+            ? <Empty
+              image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+              imageStyle={{ height: 60 }}
+              description={
+                <span>
+                  暂无文件
+                </span>
+              }
+            />
+            : null
+        }
       </div>
     </div>
   )

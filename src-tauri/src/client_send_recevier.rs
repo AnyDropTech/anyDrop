@@ -13,7 +13,7 @@ pub const CLIENT_FILE_PORT: u32 = 17008;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct FileInfoItem {
   name: String,
-  size: u64,
+  size: String,
   path: String
 }
 

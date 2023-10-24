@@ -22,6 +22,7 @@ import { FileList } from './fileList'
 import type { IQueryRes } from './types'
 
 import './index.scss'
+import { v4 } from 'uuid'
 
 async function getFileInfo(paths: string[]) {
   const fileInfos: Array<IFileItem> = []
@@ -177,15 +178,14 @@ function Find() {
     selectDevice.forEach((device) => {
       invoke('send_file_confirmation', {
         senderInfo: {
-          id: device.id,
+          id: device.id || v4(),
           ip: device.ip_addrs[0],
           fullname: device.fullname,
-          device_name: device.hostname,
+          device_name: device.data.device_name,
           port: device.port,
           files: files.map(file => ({
             name: file.name,
-            size: file.size,
-            ext: file.ext,
+            size: file.size.toString(),
             path: file.name,
           })) as FileInfoItem[],
         },
