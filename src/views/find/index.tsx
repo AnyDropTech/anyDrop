@@ -9,6 +9,7 @@ import { observer } from 'mobx-react-lite'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { throttle } from 'throttle-debounce'
+import { v4 } from 'uuid'
 
 import { ClearIcon, DownIcon, FileIcon, FloderIcon, PasteIcon, SenderIcon } from '../../components'
 import { WifiIcon } from '../../components/icons/files'
@@ -22,7 +23,6 @@ import { FileList } from './fileList'
 import type { IQueryRes } from './types'
 
 import './index.scss'
-import { v4 } from 'uuid'
 
 async function getFileInfo(paths: string[]) {
   const fileInfos: Array<IFileItem> = []
@@ -151,6 +151,7 @@ function Find() {
   const navigate = useNavigate()
   const handleSendFile = () => {
     const files = pendingFiles
+    console.log('🚀 ~ file: index.tsx:154 ~ handleSendFile ~ files:', files)
     const devices = selectDevice
 
     const selectFileForDevices: ISendFileInfo[] = devices.map((item) => {
