@@ -7,6 +7,7 @@ export interface IFileItem {
   name: string
   size: string
   ext: string
+  path: string
 }
 export interface IProps {
   fileList: IFileItem[]

@@ -186,6 +186,7 @@ struct TransferDone {
 }
 // 添加文件传输函数
 async fn transfer_file(target_socket: &mut TcpStream, file_name: String) {
+  println!("开始发送文件: {}", file_name);
   let f = File::open(file_name.clone()).await.unwrap();
   let mut reader = BufReader::new(f);
   let mut writer = target_socket;
@@ -237,20 +238,6 @@ pub async fn send_file_confirmation(sender_info: SendFileInfo) -> Result<(), Str
     fullname: sender_info.fullname.clone(),
     device_name: sender_info.device_name.clone(),
     port: sender_info.port.clone(),
-    // files: vec![
-    //   FileInfoItem {
-    //     name: "test.txt".to_string(),
-    //     size: 1024,
-    //     // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
-    //     path: "/Users/cavinhuang/Downloads/20230921-144908.jpeg".to_string()
-    //   },
-    //   FileInfoItem {
-    //     name: "test2.txt".to_string(),
-    //     size: 1024,
-    //     // path: "C:\\Users\\Administrator\\Desktop\\test.txt".to_string(),
-    //     path: "/Users/cavinhuang/Downloads/使用说明.txt".to_string()
-    //   }
-    // ]
     files: sender_info.files.clone()
   };
   let send_message = SendMessage {

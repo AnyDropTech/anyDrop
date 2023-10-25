@@ -33,6 +33,7 @@ async function getFileInfo(paths: string[]) {
     fileInfos.push({
       name: baseName,
       ext: extname,
+      path: paths[i],
       size: formatFileSize(medata.size),
     })
   }
@@ -100,6 +101,7 @@ function Find() {
 
   const handleFileDrop: tauriEvent.EventCallback<string[]> = useCallback(async (data) => {
     const files = data.payload
+    console.log('🚀 ~ file: index.tsx:103 ~ consthandleFileDrop:tauriEvent.EventCallback<string[]>=useCallback ~ files:', files)
     if (isCurrentDrop(files))
       return
     currentDropFile = files
@@ -124,6 +126,7 @@ function Find() {
       const name = await tauriPath.basename(file)
       currentFiles.push({
         name,
+        path: file,
         size: '',
         ext: '',
       })
@@ -165,7 +168,7 @@ function Find() {
           name: file.name,
           size: file.size,
           ext: file.ext,
-          path: file.name,
+          path: file.path,
         })) as FileInfoItem[],
       }
     })
@@ -187,7 +190,7 @@ function Find() {
           files: files.map(file => ({
             name: file.name,
             size: file.size.toString(),
-            path: file.name,
+            path: file.path,
           })) as FileInfoItem[],
         },
       }).then((res) => {
