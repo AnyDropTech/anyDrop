@@ -1,9 +1,9 @@
 import type { MenuProps } from 'antd'
-import { Button,Dropdown,Empty,Space } from 'antd'
+import { Button, Dropdown, Empty, Space } from 'antd'
 import { computed } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
-import { FloderIcon,UnkownIcon,WifiIcon } from '../../components'
+import { FloderIcon, UnkownIcon, WifiIcon } from '../../components'
 import { useStore } from '../../store'
 
 import MacIcon from '../../assets/MacBook.svg'
@@ -81,7 +81,7 @@ function recever() {
                     </div>
                     <div className="file-action">
                       <Button type="primary">接收</Button>
-                      <Button type="dashed">拒绝</Button>
+                      <Button type="dashed" ml-10px>拒绝</Button>
                     </div>
                   </div>
                 </div>

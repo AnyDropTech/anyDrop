@@ -11,7 +11,7 @@ pub const CLIENT_PORT: u32 = 16008;
 pub const CLIENT_FILE_PORT: u32 = 17008;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-struct FileInfoItem {
+pub struct FileInfoItem {
   name: String,
   size: String,
   path: String
@@ -131,12 +131,12 @@ async fn transfer_recever_message(message: String, client_socket: &mut TcpStream
         "confirm" => {
           let send_file_info = serde_json::from_value::<SendFileInfo>(parse_message.playload.clone())
           .expect("解析 SendFileInfo 失败");
-          let recevire_message = SendMessage {
-            msg_type: "recevier_confirm".to_string(),
-            playload: send_file_info.clone()
-          };
-          let buf = serde_json::to_string(&recevire_message).unwrap();
-          let _ = client_socket.try_write(buf.as_bytes());
+          // let recevire_message = SendMessage {
+          //   msg_type: "recevier_confirm".to_string(),
+          //   playload: send_file_info.clone()
+          // };
+          // let buf = serde_json::to_string(&recevire_message).unwrap();
+          // let _ = client_socket.try_write(buf.as_bytes());
           window.emit::<SendFileInfo>("anyDrop://send_file_confirmation", send_file_info.clone()).expect("发送确认消息失败");
           println!("接收到确认消息: {:?}", send_file_info.clone());
         },
@@ -213,7 +213,6 @@ pub async fn send_file_confirmation(sender_info: SendFileInfo) -> Result<(), Str
   let target_ip = sender_info.ip.clone();
   // 连接到目标设备
   let target_addr: SocketAddr = format!("{target_ip}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
-  // let mut target_socket = TcpStream::connect(target_addr).await.expect("连接到目标设备失败");
   let mut target_socket = match TcpStream::connect(target_addr).await {
     Ok(socket) => socket,
     Err(e) => {
@@ -283,6 +282,32 @@ pub async fn send_file_confirmation(sender_info: SendFileInfo) -> Result<(), Str
   Ok(())
 }
 
+
+/**
+ * 发送文件确认消息-对方手动确认传输
+ */
+#[tauri::command]
+pub async fn handle_send_file_confirm(sender_ip: String, file_list: &Vec<FileInfoItem>) -> Result<(), String> {
+  let sender_ip_own = sender_ip.clone();
+  // 连接到目标设备
+  let target_addr: SocketAddr = format!("{sender_ip_own}:{CLIENT_PORT}").parse().expect("目标设备地址解析失败");
+  let sender_socket = match TcpStream::connect(target_addr).await {
+    Ok(socket) => socket,
+    Err(e) => {
+        println!("连接到目标设备失败: {}", e);
+        return Err(e.to_string());
+    }
+  };
+
+  let recevire_message = SendMessage {
+    msg_type: "recevier_confirm".to_string(),
+    playload: file_list.clone()
+  };
+  let buf = serde_json::to_string(&recevire_message).unwrap();
+  let _ = sender_socket.try_write(buf.as_bytes());
+
+  Ok(())
+}
 /**
  * 拒绝接收文件消息
  */
